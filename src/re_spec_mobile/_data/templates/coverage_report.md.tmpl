@@ -7,7 +7,7 @@ last_updated: '{{date_iso}}'
 generated_at: {{generated_at_iso}}
 generated_by: coverage_report.py v1
 scope_version: {{scope_version}}
-status: draft                                      # → sign_off_pass | sign_off_fail after PM review
+status: draft                                      # → sign_off_pass | sign_off_fail sau khi PM review
 
 captured:
   count: {{captured_count}}
@@ -15,22 +15,22 @@ captured:
     - {{captured_anchor_1}}
     - {{captured_anchor_2}}
 
-gaps:                                              # IN scope but NOT captured
+gaps:                                              # IN scope nhưng CHƯA capture
   - anchor: {{gap_anchor_1}}
     reason: "{{gap_reason_1}}"
 
-drift:                                             # CAPTURED but NOT declared in scope
+drift:                                             # CAPTURED nhưng KHÔNG khai trong scope
   - capture_label: {{drift_label_1}}
     hash: {{drift_hash_1}}
     cluster_guess: "{{drift_cluster_guess}}"
     reason_guess: "{{drift_reason_guess}}"
 
-unknowns_resolved: []                              # PM appends manually after review
-decisions: []                                      # PM action items
+unknowns_resolved: []                              # PM append thủ công sau review
+decisions: []                                      # PM action item
 
 related:
   - {{feature_slug}}/scope/root
-  - {{feature_slug}}/observations/root             # forward-ref (may not exist yet)
+  - {{feature_slug}}/observations/root             # forward-ref (có thể chưa tồn tại)
 ---
 
 # {{app_name}} — {{feature_title}} Coverage Report
@@ -55,39 +55,39 @@ related:
 |---|---|
 | Must-visit captured | {{must_captured}} / {{must_total}} |
 | Optional captured | {{opt_captured}} / {{opt_total}} |
-| Drift (out-of-scope captures) | {{drift_count}} |
-| Gap (in-scope misses) | {{gap_count}} |
-| Unknowns unresolved | {{unknowns_unresolved}} |
+| Drift (capture out-of-scope) | {{drift_count}} |
+| Gap (in-scope miss) | {{gap_count}} |
+| Unknown unresolved | {{unknowns_unresolved}} |
 
-**Status**: _(PM fills after review)_ — `sign_off_pass` hoặc `sign_off_fail`.
+**Status**: _(PM fill sau review)_ — `sign_off_pass` hoặc `sign_off_fail`.
 
 ---
 
-## 2. Captured (matches scope)
+## 2. Captured (match scope)
 
-Anchors trong scope đã có dump + screenshot:
+Anchor trong scope đã có dump + screenshot:
 
 | Anchor | Cluster | Capture file | Dump file |
 |---|---|---|---|
-| _(auto-filled by coverage_report.py)_ |  |  |  |
+| _(auto-fill bởi coverage_report.py)_ |  |  |  |
 
 ---
 
-## 3. Gaps (in scope but missing)
+## 3. Gaps (in scope nhưng thiếu)
 
-Mỗi gap = must_visit anchor được declared trong scope nhưng KHÔNG có capture.
+Mỗi gap = anchor must_visit khai trong scope nhưng KHÔNG có capture.
 
 ### Gap 1: {{gap_anchor_1}}
 
 - **Reason**: {{gap_reason_1}}
-- **Suggested fix**: _(eg. "rerun app-explorer with extended timeout for cluster X")_
-- **PM decision**: _(fill in: re-capture / revise scope to drop / accept partial)_
+- **Suggested fix**: _(vd. "rerun app-explorer với extended timeout cho cluster X")_
+- **PM decision**: _(fill in: re-capture / revise scope drop / accept partial)_
 
 ---
 
-## 4. Drift (captured but not in scope)
+## 4. Drift (capture nhưng không trong scope)
 
-Mỗi drift = screen captured được nhưng KHÔNG declared trong scope.
+Mỗi drift = screen capture được nhưng KHÔNG khai trong scope.
 
 ### Drift 1: {{drift_label_1}}
 
@@ -95,7 +95,7 @@ Mỗi drift = screen captured được nhưng KHÔNG declared trong scope.
 - **Cluster guess**: {{drift_cluster_guess}}
 - **Reason guess**: {{drift_reason_guess}}
 - **Capture file**: `{{drift_capture_file_1}}`
-- **PM decision**: _(fill in: add to scope cluster X / drop drift / move to out_of_scope)_
+- **PM decision**: _(fill in: add vào scope cluster X / drop drift / move sang out_of_scope)_
 
 ---
 
@@ -103,24 +103,24 @@ Mỗi drift = screen captured được nhưng KHÔNG declared trong scope.
 
 PM trả lời inline + append vào frontmatter `unknowns_resolved` + `decisions`.
 
-### Open scope questions still unresolved
+### Open scope question còn unresolved
 
-- _(auto-list of `unresolved_questions()` from scope_loader)_
+- _(auto-list `unresolved_questions()` từ scope_loader)_
 
-### Action items after review
+### Action item sau review
 
-_(PM fill — these go into `decisions:` frontmatter list)_
+_(PM fill — các item này vào list `decisions:` trong frontmatter)_
 
 - [ ] _(action 1)_
 - [ ] _(action 2)_
 
 ### Final status
 
-After PM completes review, update frontmatter:
+Sau khi PM xong review, update frontmatter:
 
 ```yaml
-status: sign_off_pass    # OR sign_off_fail
+status: sign_off_pass    # HOẶC sign_off_fail
 ```
 
-If `sign_off_fail`, the orchestrator will loop back to capture phase
-(re-invoke app-explorer with the gap list as scope).
+Nếu `sign_off_fail`, orchestrator sẽ loop về capture phase (gọi lại
+app-explorer với danh sách gap làm scope).

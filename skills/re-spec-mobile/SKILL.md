@@ -1,458 +1,477 @@
 ---
 name: re-spec-mobile
 description: |
-  Reverse-engineer any Android app into a 3-layer spec corpus
-  (observations + flow + implementation) using droidrun Portal + adb +
-  spec-graph MCP. Trigger when the user says "RE app", "spec feature X",
+  Reverse-engineer bất kỳ app Android nào thành bộ spec 3 layer
+  (observations + flow + implementation) bằng droidrun Portal + adb +
+  spec-graph MCP. Kích hoạt khi user nói "RE app", "spec feature X",
   "auto-test feature X", "tạo spec cho app này", "rebuild spec mobile",
-  or invokes `/re-spec-mobile` directly. The skill is app-agnostic: every
-  app-specific value (package, viewport, blocklist, tabs, paths, reference
-  style) is read from the project's `.spec-profile.yml` adapter file.
+  hoặc gọi trực tiếp `/re-spec-mobile`. Skill app-agnostic: mọi giá trị
+  đặc thù app (package, viewport, blocklist, tabs, paths, reference style)
+  đọc từ file `.spec-profile.yml` của project.
 version: 1.0.0
 ---
 
-# re-spec-mobile — Reverse-engineer mobile apps into specs
+# re-spec-mobile — Reverse-engineer mobile app thành spec
 
-> **What this skill does, in one sentence:** drive a connected Android device,
-> capture every screen of a feature, and produce 3 markdown files (observations
-> / flow / implementation) that engineers can rebuild the feature from without
-> ever running the original app.
+> **Skill này làm gì, gói trong 1 câu:** điều khiển 1 device Android được kết nối,
+> capture mọi screen của 1 feature, sinh ra 3 file markdown (observations / flow
+> / implementation) để engineer rebuild lại feature mà không cần chạy app gốc.
 
-## When to use
+## Output: tiếng Việt + thuật ngữ tiếng Anh
 
-Trigger this skill when the user wants to:
+**Mọi spec sinh ra phải viết bằng tiếng Việt**, riêng các thuật ngữ chuyên môn
+giữ nguyên tiếng Anh (xem `docs/I18N_GLOSSARY.md`). Áp dụng cho:
 
-- Spec a feature of an Android app they don't own the source of (competitor
-  research, internal RE for spec-first methodology, regression baseline).
-- Auto-test a flow + record artifacts (screenshots + a11y dumps + nav graph).
-- Bootstrap a new project to start spec'ing (Phase 0 only — see below).
-- Re-run capture against a new app build to detect drift vs prior spec.
+- Mô tả prose trong observations / spec / feature_spec
+- Section heading mang tính prose ("Mô tả", "Lý do", "Hành vi quan sát")
+- Comment + Open Questions + PM answer
+- Commit message + PR description
 
-**Do NOT use** for: app implementation (use `implement-feature` skill instead);
-spec query against an existing graph (use `spec-graph` agent); generic Android
-reverse-engineering of APK internals (use `android-reverse-engineering` skill).
+**Giữ nguyên tiếng Anh:**
+- YAML frontmatter keys (`feature`, `layer`, `anchor`, ...) + values là enum/anchor
+- Code block, CLI command, file path, function name
+- UI string trích nguyên văn từ app (giữ ngôn ngữ gốc của app — kể cả tiếng Anh)
+- Status string (`DONE`, `BLOCKED`, `DONE-PARTIAL`, `signed_off`, ...)
+- Technical term: `tap`, `swipe`, `scroll`, `viewport`, `bounds`, `blocklist`,
+  `scope`, `gate`, `must_visit`, `coverage`, `drift`, `gap`, `anchor`,
+  `frontmatter`, `reuse_key`, `Portal`, `adb`, `MCP`, `acceptance criteria`, ...
 
-## Inputs you must establish before Phase 1
+## Khi nào dùng
 
-1. **Profile present?** — there must be `.spec-profile.yml` at the project root.
-   If absent → run **Phase 0** (init).
-2. **Device alive?** — exactly one device on `adb devices` matching profile
-   `device.serial` (or any device if serial blank).
-3. **Portal alive?** — `adb shell content query --uri content://com.droidrun.portal/state`
-   returns `"status":"success"`. If not → `bash $(re-spec-paths --shell setup_portal.sh)`.
-4. **App focused?** — `adb shell dumpsys window | grep mCurrentFocus` shows the
-   profile's `app.package`. Otherwise ask the user to open the app.
-5. **Feature scope?** — user must name the feature (e.g. `bible`, `explore_create`).
-   The slug becomes the folder name + frontmatter `feature` field.
+Kích hoạt skill này khi user muốn:
 
-If any of (2–4) fail, report the specific failure to the user and offer the
-exact remediation command. Don't guess.
+- Spec 1 feature của app Android mà họ không sở hữu source code (research đối thủ,
+  RE nội bộ cho methodology spec-first, tạo baseline regression).
+- Auto-test 1 flow + lưu artifact (screenshot + a11y dump + nav graph).
+- Bootstrap 1 project mới để bắt đầu spec (chỉ Phase 0 — xem dưới).
+- Chạy lại capture với build app mới để phát hiện drift so với spec cũ.
+
+**KHÔNG dùng** cho: implement app (dùng skill `implement-feature`); query spec
+trên graph có sẵn (dùng agent `spec-graph`); RE nội tạng APK (dùng skill
+`android-reverse-engineering`).
+
+## Input phải xác lập trước Phase 1
+
+1. **Có profile chưa?** — phải có `.spec-profile.yml` ở root project. Nếu thiếu
+   → chạy **Phase 0** (init).
+2. **Device sống chưa?** — đúng 1 device trong `adb devices` khớp với
+   `device.serial` trong profile (hoặc bất kỳ device nếu serial bỏ trống).
+3. **Portal sống chưa?** — `adb shell content query --uri content://com.droidrun.portal/state`
+   trả về `"status":"success"`. Nếu không → `bash $(re-spec-paths --shell setup_portal.sh)`.
+4. **App đang focus chưa?** — `adb shell dumpsys window | grep mCurrentFocus`
+   phải hiện `app.package` của profile. Nếu không, yêu cầu user mở app.
+5. **Scope feature?** — user phải đặt tên feature (vd `bible`, `explore_create`).
+   Slug này sẽ thành tên folder + giá trị field `feature` trong frontmatter.
+
+Nếu (2–4) thất bại, báo cụ thể lỗi nào cho user và đề xuất command fix chính xác.
+Đừng đoán.
 
 ---
 
-## Workflow — 10 phases (with 3 PM gates)
+## Workflow — 10 phase (kèm 3 PM gate)
 
-The workflow has **3 PM-controlled gates** between automation phases. Each
-gate produces a markdown artifact PM signs off, and the next agent refuses to
-start without sign-off. This prevents the "AI captured what it thought, not
-what PM wanted" failure mode.
+Workflow có **3 gate do PM kiểm soát** xen giữa các phase tự động. Mỗi gate
+sinh ra 1 artifact markdown PM duyệt, agent kế tiếp từ chối chạy nếu chưa có
+sign-off. Cách này chặn được failure mode "AI capture cái nó nghĩ, không phải
+cái PM muốn".
 
 ```
-Phase 0   Bootstrap (one-time per project)
+Phase 0   Bootstrap (1 lần / project)
 Phase 1   Kickoff
-Phase 1.5 ━━━ GATE 1: Scope contract ━━━━━━━━━━ PM signs <feature>_scope.md
-Phase 2   Capture loop (app-explorer agent)
-Phase 3   Reset handoff (when stuck)
-Phase 4   Coverage check (mid-loop, automated)
-Phase 4.5 ━━━ GATE 2: Coverage report ━━━━━━━━━ PM signs <feature>_coverage_report.md
-Phase 5   Write specs draft (spec-writer agent, mode=draft)
-Phase 5.5 ━━━ GATE 3: Spec review loop ━━━━━━━━ PM annotates open questions inline
-Phase 6   Spec graph rebuild + validate
-Phase 7   Commit (manual)
+Phase 1.5 ━━━ GATE 1: Scope contract ━━━━━━━━━━ PM ký <feature>_scope.md
+Phase 2   Capture loop (agent app-explorer)
+Phase 3   Reset handoff (khi bị stuck)
+Phase 4   Coverage check (giữa loop, tự động)
+Phase 4.5 ━━━ GATE 2: Coverage report ━━━━━━━━━ PM ký <feature>_coverage_report.md
+Phase 5   Viết draft spec (agent spec-writer, mode=draft)
+Phase 5.5 ━━━ GATE 3: Spec review loop ━━━━━━━━ PM trả lời open question inline
+Phase 6   Rebuild + validate spec graph
+Phase 7   Commit (thủ công)
 ```
 
 
 
-### Phase 0 — Bootstrap (one-time per project)
+### Phase 0 — Bootstrap (1 lần / project)
 
-When `.spec-profile.yml` doesn't exist in CWD or any parent.
+Khi `.spec-profile.yml` chưa tồn tại trong CWD hoặc parent nào.
 
 ```bash
 re-spec-init
 ```
 
-This:
-- Detects device viewport (`adb shell wm size`) + currently focused app, patches
-  the template with what it found.
-- Writes `.spec-profile.yml` template to CWD.
-- Scaffolds `spec/{feature,screens,ui_dumps,_raw,_graph,_contracts}/`.
-- Writes `.mcp.json` so the spec-graph MCP server auto-loads in this repo.
+Lệnh này:
+- Detect viewport device (`adb shell wm size`) + app đang focus, patch template
+  với giá trị tìm được.
+- Ghi template `.spec-profile.yml` vào CWD.
+- Scaffold `spec/{feature,screens,ui_dumps,_raw,_graph,_contracts}/`.
+- Ghi `.mcp.json` để spec-graph MCP server tự load trong repo này.
 
-Then **stop and ask the user** to:
-- Confirm `app.package` + `app.main_activity` (autodetected if device was open).
-- Fill `navigation.tabs` (do this after Phase 2 yields one capture you can read).
-- Add app-specific `blocklist.custom` patterns (paywall CTAs, destructive verbs).
+Sau đó **dừng và hỏi user**:
+- Confirm `app.package` + `app.main_activity` (đã autodetect nếu device đang mở app).
+- Điền `navigation.tabs` (làm sau khi Phase 2 đã capture được 1 screen để đọc).
+- Thêm pattern `blocklist.custom` đặc thù app (paywall CTA, verb destructive).
 
-Validate before proceeding:
+Validate trước khi tiếp:
 
 ```bash
 re-spec-profile --validate
 ```
 
-Then run `bash $(re-spec-paths --shell setup_portal.sh)` to bring Portal up on the device.
-The user must enable accessibility manually if the script fails at section 4
-(common on Pixel/AOSP — print the exact instruction from setup_portal.sh).
+Sau đó chạy `bash $(re-spec-paths --shell setup_portal.sh)` để bật Portal trên device.
+User phải bật accessibility manually nếu script fail ở section 4 (hay gặp trên
+Pixel/AOSP — in chính xác hướng dẫn từ setup_portal.sh).
 
 ### Phase 1 — Kickoff
 
-When the user says "spec feature X":
+Khi user nói "spec feature X":
 
-1. Read `.spec-profile.yml`. Confirm `app.package`, `device.viewport`,
-   `paths.spec_root` are set; refuse otherwise.
-2. Verify Portal alive (60-second checklist below).
-3. Ask the user (only if not stated): which feature? what's the starting state
-   (which tab, which screen)? need a reset?
-4. Create a TaskList with ~10 tasks (one per workflow phase including 3 gates).
-5. **Decide auto-approve eligibility**: if user signals "small feature, ~3
-   screens" OR explicitly says "skip scope" → set `bypass_scope=true`.
-   Otherwise continue to Phase 1.5 (Gate 1).
-6. Wait for user to reply `ready, <feature>, <starting screen>`.
+1. Đọc `.spec-profile.yml`. Confirm `app.package`, `device.viewport`,
+   `paths.spec_root` đã set; nếu thiếu thì từ chối.
+2. Verify Portal sống (checklist 60-giây phía dưới).
+3. Hỏi user (chỉ khi chưa nói rõ): feature nào? starting state (tab nào, screen
+   nào)? cần reset không?
+4. Tạo TaskList với ~10 task (1 task / phase, gồm 3 gate).
+5. **Quyết định auto-approve:** nếu user báo "feature nhỏ, ~3 screen" HOẶC nói
+   thẳng "skip scope" → set `bypass_scope=true`. Ngược lại tiếp Phase 1.5 (Gate 1).
+6. Chờ user reply `ready, <feature>, <starting screen>`.
 
-### Phase 1.5 — GATE 1: Scope contract (PM sign-off before capture)
+### Phase 1.5 — GATE 1: Scope contract (PM sign-off trước khi capture)
 
-**Purpose**: chốt scope giữa PM ↔ Claude TRƯỚC capture. Không để AI tự decide
+**Mục đích**: chốt scope giữa PM ↔ Claude TRƯỚC capture. Không để AI tự decide
 "đi đâu là đủ" — đó là root cause #1 của "AI auto-test chưa đi hết các màn".
 
 #### Workflow
 
-1. Check if `<feature_root>/<feature>/<feature>_scope.md` already exists.
-   - status=signed_off → skip to Phase 2
-   - status≠signed_off → continue from where PM left off
-   - file missing → Claude proposes draft (next step)
+1. Check xem `<feature_root>/<feature>/<feature>_scope.md` đã tồn tại chưa.
+   - status=signed_off → skip qua Phase 2
+   - status≠signed_off → tiếp tục từ chỗ PM còn dở
+   - File thiếu → Claude propose draft (bước kế)
 
-2. **Claude proposes scope draft** by:
-   - Quick reconnaissance capture (1-2 screens of the feature landing)
-   - Reading any existing related specs (`spec_search <feature>` via MCP)
-   - Asking PM via short Q&A:
+2. **Claude propose draft scope** bằng cách:
+   - Capture trinh sát nhanh (1-2 screen của feature landing)
+   - Đọc spec liên quan đã có (`spec_search <feature>` qua MCP)
+   - Hỏi PM bằng Q&A ngắn:
      - "Feature này gồm những cluster nào? (vd Wizard / Plan Detail / Paywall)"
      - "Cluster nào IN scope, cluster nào OUT?"
      - "Có ràng buộc gì với cluster IN? (vd 'phải capture cả back press', 'A/B variant')"
      - "Câu hỏi nào cần PM trả lời trước khi capture?"
-   - Generate `<feature>_scope.md` from `templates/scope.md.tmpl`,
-     fill answers, set `status: draft`.
+   - Sinh `<feature>_scope.md` từ `templates/scope.md.tmpl`, điền câu trả lời,
+     set `status: draft`.
 
-3. **PM reviews + signs off**:
-   - Read scope.md, edit must_visit / optional / out_of_scope as needed
-   - Answer Open Questions inline (`**PM answer**: <text>` under each `### Q-NN`)
-   - Set `status: signed_off`, fill `signed_off_by` + `signed_off_at`
-   - Bump `scope_version` if revising after a previous sign-off
+3. **PM review + sign-off**:
+   - Đọc scope.md, sửa must_visit / optional / out_of_scope nếu cần
+   - Trả lời Open Question inline (`**PM answer**: <text>` dưới mỗi `### Q-NN`)
+   - Set `status: signed_off`, điền `signed_off_by` + `signed_off_at`
+   - Tăng `scope_version` nếu sửa lại sau lần sign-off trước
 
-4. Claude verifies sign-off:
+4. Claude verify sign-off:
    ```bash
    re-spec-scope <feature> --check
    ```
-   Exit 0 → continue to Phase 2. Exit 1 → tell PM what's blocking.
+   Exit 0 → tiếp Phase 2. Exit 1 → báo PM đang vướng gì.
 
-#### Auto-approve exception
+#### Trường hợp ngoại lệ — Auto-approve
 
-Skip Gate 1 when ALL of:
-- Feature is < 5 screens (estimated)
-- User explicitly says "skip scope" or "auto"
-- No PM in the loop (solo dev mode)
+Skip Gate 1 khi cả:
+- Feature ước tính < 5 screen
+- User nói thẳng "skip scope" hoặc "auto"
+- Không có PM trong loop (mode solo dev)
 
-In auto-approve, Claude proceeds with `bypass_scope=true`. Capture loop
-still produces nav_graph + dumps; coverage_report skipped at Gate 2.
+Trong auto-approve, Claude tiếp với `bypass_scope=true`. Capture loop vẫn sinh
+nav_graph + dump; coverage_report skip ở Gate 2.
 
 ### Phase 2 — Capture loop
 
-Delegate to the **`app-explorer` agent** (subagent in this package). It runs
-autonomously with adb + Portal access; you stay in the main context. The agent's
-contract:
+Delegate cho **agent `app-explorer`** (subagent đi kèm package này). Agent chạy
+tự động với quyền adb + Portal; bạn ở lại main context. Contract của agent:
 
-- **Input:** feature slug, starting screen description, profile path.
+- **Input:** feature slug, mô tả starting screen, đường dẫn profile.
 - **Tools:** Bash + Read.
-- **Output:** populated `<screens_root>/<feature>/`, `<dumps_root>/<feature>/`,
-  `<raw_root>/<feature>/nav_graph.json`. Returns a short status: screens
-  captured, edges, blockers if any.
+- **Output:** điền vào `<screens_root>/<feature>/`, `<dumps_root>/<feature>/`,
+  `<raw_root>/<feature>/nav_graph.json`. Trả về status ngắn: số screen đã
+  capture, số edge, blocker nếu có.
 
-Driver loop (per screen):
+Driver loop (mỗi screen):
 
 ```bash
-# Verify Portal alive
+# Verify Portal sống
 adb shell "content query --uri content://com.droidrun.portal/state" | head -c 80
-# → must contain '"status":"success"'
+# → phải chứa '"status":"success"'
 
 # Landing
 re-spec-capture <feature> screen_01_landing
 
-# Tap an element to reach a sub-screen
+# Tap 1 element để đến sub-screen
 adb shell input tap 540 1100
 re-spec-capture <feature> screen_02_<name> \
   --from screen_01_landing --via "tap:(540,1100) <element label>"
 
-# Scroll segment (use edge_swipe_x from profile when center is overlaid)
+# Scroll segment (dùng edge_swipe_x từ profile khi center bị overlay nuốt)
 adb shell input swipe 540 1500 540 500 800
 
 # Back
 adb shell input keyevent KEYCODE_BACK
 ```
 
-**Tips that prevent stuck loops** (from accumulated experience):
+**Tip chống stuck loop** (đúc kết từ kinh nghiệm):
 
-- Use `coverage_check.py <feature>` mid-loop to know what clickables remain.
-- Swipe duration ≥ 600ms, < 1500ms (longer = scroll, shorter = fling/tap).
-- If center swipe doesn't move content (floating overlay nuốt), use
-  `profile.scroll.edge_swipe_x` (default 200) and `long_swipe_duration_ms`.
-- Compose `v01` modal sheets sometimes trap KEYCODE_BACK — list them in
-  `profile.modals.back_traps`. Dismiss with swipe-down (top→bottom).
-- Tap coordinate parsing: read `<dumps_root>/<feature>/<screen>.json` and
-  pull `bounds` from clickable nodes; centre = midpoint of bounds.
+- Dùng `coverage_check.py <feature>` giữa loop để biết clickable nào còn sót.
+- Swipe duration ≥ 600ms, < 1500ms (dài hơn = scroll, ngắn hơn = fling/tap).
+- Nếu center swipe không kéo được content (floating overlay nuốt), dùng
+  `profile.scroll.edge_swipe_x` (default 200) và `long_swipe_duration_ms`.
+- Compose modal sheet `v01` đôi khi nuốt KEYCODE_BACK — list chúng vào
+  `profile.modals.back_traps`. Dismiss bằng swipe-down (top→bottom).
+- Parse toạ độ tap: đọc `<dumps_root>/<feature>/<screen>.json` rồi lấy `bounds`
+  từ node clickable; centre = midpoint của bounds.
 
-### Phase 3 — Reset handoff (when stuck)
+### Phase 3 — Reset handoff (khi stuck)
 
-Pause and ask the user with a precise template:
+Tạm dừng và hỏi user theo template chuẩn:
 
 ```
-Stuck at <screen description>. Need you to:
-  1. <specific physical action — eg. force-close app, tap Settings, etc.>
-  2. <next action>
-Then reply: ready, <feature>, <new state>
+Stuck ở <mô tả screen>. Cần bạn:
+  1. <hành động vật lý cụ thể — vd force-close app, tap Settings, ...>
+  2. <hành động kế>
+Sau đó reply: ready, <feature>, <state mới>
 ```
 
-**Do NOT** `pm clear` the package automatically. **Do NOT** force-restart the
-app via `am start` — that often loses tab/scroll state. Only the user resets.
+**KHÔNG** tự động `pm clear` package. **KHÔNG** force-restart app bằng
+`am start` — thường mất tab/scroll state. Chỉ user reset.
 
-### Phase 4 — Coverage check (mid-loop, automated)
+### Phase 4 — Coverage check (giữa loop, tự động)
 
 ```bash
 re-spec-coverage-check <feature> --scope
 ```
 
-The `--scope` flag buckets MISS items by scope status (must_visit /
-optional / out_of_scope / unscoped). If MISS in `must_visit_screen` bucket
-remain → loop back to Phase 2 with prioritized targets. Out-of-scope MISS
-are ignored (they're explicitly skipped per Gate 1 contract).
+Flag `--scope` phân loại MISS theo trạng thái scope (must_visit / optional /
+out_of_scope / unscoped). Nếu còn MISS trong bucket `must_visit_screen` → loop
+về Phase 2 với target ưu tiên. MISS out-of-scope thì bỏ qua (đã chốt skip ở
+Gate 1).
 
-The blocklist is read from `profile.blocklist` so `Subscribe / Logout / Buy /
-Continue` etc. are auto-filtered.
+Blocklist đọc từ `profile.blocklist` nên `Subscribe / Logout / Buy / Continue`
+v.v. tự động bị filter.
 
-### Phase 4.5 — GATE 2: Coverage report (PM audit before write)
+### Phase 4.5 — GATE 2: Coverage report (PM audit trước khi viết)
 
-**Purpose**: PM verifies capture phase actually covered scope contract before
-spec-writer spends time generating prose.
+**Mục đích**: PM verify rằng phase capture thực sự đã phủ scope contract trước
+khi spec-writer tốn công sinh prose.
 
 #### Workflow
 
-1. Generate the report:
+1. Sinh report:
    ```bash
    re-spec-coverage-report <feature>
    ```
-   Writes `<feature_root>/<feature>/<feature>_coverage_report.md` with 5 sections:
-   summary metrics / captured / gaps / drift / PM review template.
+   Ghi `<feature_root>/<feature>/<feature>_coverage_report.md` với 5 section:
+   summary metric / captured / gap / drift / template PM review.
 
-2. **PM reviews**:
-   - Read coverage_report.md sections 1-4
-   - For each Gap: decide re-capture / revise scope / accept partial
-   - For each Drift: decide add to scope cluster X / drop / move to out_of_scope
-   - For each Open Question still unresolved: answer inline
-   - Append decisions to frontmatter `decisions:` list
-   - Set `status: sign_off_pass` OR `sign_off_fail`
+2. **PM review**:
+   - Đọc coverage_report.md section 1-4
+   - Mỗi Gap: quyết định re-capture / sửa scope / chấp nhận partial
+   - Mỗi Drift: quyết định thêm vào scope cluster X / bỏ / chuyển out_of_scope
+   - Mỗi Open Question còn dở: trả lời inline
+   - Append decision vào field `decisions:` trong frontmatter
+   - Set `status: sign_off_pass` HOẶC `sign_off_fail`
 
-3. Claude branches on PM decision:
-   - `sign_off_pass` → proceed to Phase 5
-   - `sign_off_fail` → loop back to Phase 2 with the gap/drift action items
-     as new capture targets. Bump `scope_version` if PM revised scope.
+3. Claude rẽ nhánh theo PM decision:
+   - `sign_off_pass` → tiếp Phase 5
+   - `sign_off_fail` → loop về Phase 2 với gap/drift action item làm target
+     capture mới. Bump `scope_version` nếu PM sửa scope.
 
-#### Auto-approve exception
+#### Trường hợp ngoại lệ — Auto-approve
 
-If `bypass_scope=true` (small feature) → skip coverage_report generation,
-proceed to Phase 5 directly.
+Nếu `bypass_scope=true` (feature nhỏ) → skip sinh coverage_report, đi thẳng
+Phase 5.
 
-### Phase 5 — Write specs draft
+### Phase 5 — Viết draft spec
 
-Delegate to the **`spec-writer` agent** (subagent in this package). Contract:
+Delegate cho **agent `spec-writer`** (subagent đi kèm package này). Contract:
 
-- **Input:** feature slug, profile path. Reads from
+- **Input:** feature slug, đường dẫn profile. Đọc từ
   `<dumps_root>/<feature>/`, `<raw_root>/<feature>/nav_graph.json`,
-  `<screens_root>/<feature>/`, plus the canonical reference (either
-  `profile.reference.canonical_feature` if set, else
+  `<screens_root>/<feature>/`, kèm canonical reference (hoặc
+  `profile.reference.canonical_feature` nếu có set, hoặc
   `<skill_dir>/canonical/*.sample.md`).
 - **Tools:** Read + Write + Grep + Bash.
-- **Output:** 3 files in `<feature_root>/<feature>/`:
-  - `<feature>_observations.md` (Layer 1 — structure auto from
-    `observations_tmpl.py`, agent fills "Observed behaviour" + "Notes" per screen)
-  - `<feature>_spec.md` (Layer 2 — agent writes from scratch following
-    `spec.md.tmpl` + canonical structure)
-  - `<feature>_feature_spec.md` (Layer 3 — 9-section structure from
+- **Output:** 3 file trong `<feature_root>/<feature>/`:
+  - `<feature>_observations.md` (Layer 1 — cấu trúc tự gen từ
+    `observations_tmpl.py`, agent điền "Hành vi quan sát" + "Note" mỗi screen)
+  - `<feature>_spec.md` (Layer 2 — agent viết từ đầu theo `spec.md.tmpl` +
+    cấu trúc canonical)
+  - `<feature>_feature_spec.md` (Layer 3 — cấu trúc 9 section từ
     `feature_spec.md.tmpl` + canonical)
-- **Auto-generated helpers** the agent runs first:
+- **Helper auto-gen** agent chạy đầu tiên:
   ```bash
   re-spec-observations <feature> -o <feature_root>/<feature>/<feature>_observations.md
   re-spec-render-nav        <feature> -o <feature_root>/<feature>/<feature>_nav.md
   ```
-  These produce the boilerplate; the agent only writes prose + frontmatter +
-  the missing sections.
+  Sinh boilerplate; agent chỉ viết prose + frontmatter + section còn thiếu.
 
-Agent invoked with `mode=draft` → returns `DONE-PENDING-REVIEW` with explicit
-list of Open Questions PM must answer in the spec body (§7).
+Agent gọi với `mode=draft` → trả về `DONE-PENDING-REVIEW` kèm danh sách rõ
+Open Question PM phải trả lời trong body spec (§7).
 
-### Phase 5.5 — GATE 3: Spec review loop (PM annotates open questions)
+### Phase 5.5 — GATE 3: Spec review loop (PM trả lời open question inline)
 
-**Purpose**: catch ambiguity in spec BEFORE it lands in commit history. PM
-reads draft, answers Open Questions inline, spec-writer folds answers into
-final spec.
+**Mục đích**: bắt mọi mơ hồ trong spec TRƯỚC khi commit. PM đọc draft, trả lời
+Open Question inline, spec-writer fold câu trả lời vào spec final.
 
 #### Workflow
 
-1. Claude tells the user (PM) to review:
-   - "Spec draft ready. Open mọi file `<feature>_*.md` trong `<feature_root>/<feature>/`."
-   - "Tập trung vào `<feature>_feature_spec.md` §7 Open Questions — N câu cần bạn trả lời inline."
-   - Format: under each `### Q-NN`, add `**PM answer**: <text>` (or `WONTFIX` to drop the question).
+1. Claude báo user (PM) review:
+   - "Spec draft sẵn sàng. Mở mọi file `<feature>_*.md` trong `<feature_root>/<feature>/`."
+   - "Tập trung `<feature>_feature_spec.md` §7 Open Questions — N câu cần bạn trả lời inline."
+   - Format: dưới mỗi `### Q-NN`, thêm `**PM answer**: <text>` (hoặc `WONTFIX` để bỏ câu hỏi).
 
-2. PM annotates inline. May also tweak §3 (per-screen) and §8 (acceptance) directly.
+2. PM annotate inline. Có thể chỉnh thêm §3 (per-screen) và §8 (acceptance) trực tiếp.
 
-3. PM signals "OK reviewed" → Claude reinvokes spec-writer with `mode=revise`.
+3. PM báo "OK reviewed" → Claude gọi lại spec-writer với `mode=revise`.
 
 4. Spec-writer:
-   - Re-reads §7, finds answered questions
-   - Folds each answer into the relevant section (§3/§4/§5/§6/§8)
-   - Removes resolved questions from §7
-   - Returns `DONE` with `remaining_open_questions: <count>`
+   - Đọc lại §7, tìm câu đã trả lời
+   - Fold câu trả lời vào section liên quan (§3/§4/§5/§6/§8)
+   - Xoá câu hỏi đã giải khỏi §7
+   - Trả `DONE` với `remaining_open_questions: <count>`
 
 5. Loop:
-   - `remaining_open_questions == 0` → proceed to Phase 6
-   - Else → tell PM "still N open, plz answer", loop back to step 1
+   - `remaining_open_questions == 0` → tiếp Phase 6
+   - Ngược lại → báo PM "còn N câu, plz answer", loop về bước 1
 
-#### Auto-approve exception
+#### Trường hợp ngoại lệ — Auto-approve
 
-If `bypass_scope=true` AND PM not in loop → skip Gate 3. Spec-writer
-returns `DONE-PENDING-REVIEW` and orchestrator commits with open questions
-documented (status: draft instead of approved).
+Nếu `bypass_scope=true` VÀ không có PM trong loop → skip Gate 3. Spec-writer
+trả `DONE-PENDING-REVIEW` và orchestrator commit kèm open question
+documented (status: draft thay vì approved).
 
-### Phase 6 — Spec graph rebuild + validate
+### Phase 6 — Rebuild + validate spec graph
 
 ```bash
 re-spec-build-graph --stats
 re-spec-validate <feature_root>/<feature>/
 ```
 
-Fix any `[V*]` errors flagged by validator before commit. The MCP server
-auto-rebuilds on each tool call so manual rebuild is mostly for stats display.
+Fix mọi lỗi `[V*]` validator báo trước khi commit. MCP server auto-rebuild
+mỗi lần gọi tool nên rebuild thủ công chủ yếu để hiển thị stats.
 
-### Phase 7 — Commit (manual, never auto)
+### Phase 7 — Commit (thủ công, không bao giờ auto)
 
-Show the user a draft commit message in the project's existing style. Only run
-`git add` + `git commit` after explicit user approval. Default style (matches
-bible-agent convention):
+Show cho user 1 draft commit message theo style sẵn có của project. Chỉ chạy
+`git add` + `git commit` sau khi user duyệt rõ ràng. Style mặc định (theo
+convention của bible-agent):
 
 ```
 add <feature> feature specification document for implementation
 ```
 
-For larger sessions: include scope tag (`feat(spec):`, `chore(spec):`) and
-mention which phases ran.
+Cho session lớn: kèm scope tag (`feat(spec):`, `chore(spec):`) và liệt kê các
+phase đã chạy.
 
 ---
 
-## 60-second self-verify checklist (run at start of every session)
+## Checklist tự verify 60-giây (chạy đầu mỗi session)
 
 ```bash
-# 1. Profile present + valid
+# 1. Profile có + valid
 re-spec-profile --validate
 
-# 2. Device connected
+# 2. Device đã connect
 adb devices
 
-# 3. Portal alive
+# 3. Portal sống
 adb shell "content query --uri content://com.droidrun.portal/state" | head -c 80
-# Want '"status":"success"' or '"a11y_tree"'
+# Cần '"status":"success"' hoặc '"a11y_tree"'
 
-# 4. App focused
+# 4. App đang focus
 adb shell dumpsys window | grep mCurrentFocus | head -1
-# Want the package from .spec-profile.yml
+# Cần package từ .spec-profile.yml
 
-# 5. Existing specs (for reference style)
+# 5. Spec đã có (làm reference style)
 ls $(re-spec-profile | python -c 'import json,sys; print(json.load(sys.stdin)["paths"]["feature_root"])')
 ```
 
-Pass all 5 → ready. Any fail → use the specific remediation per the failed step.
+Pass cả 5 → sẵn sàng. Fail bất kỳ → dùng remediation tương ứng cho bước fail.
 
 ---
 
-## Style conventions (enforced by writer agent)
+## Style convention (writer agent enforce)
 
-These are non-negotiable and live in `canonical/SPEC_SCHEMA.md`:
+Bất di bất dịch, định nghĩa trong `canonical/SPEC_SCHEMA.md`:
 
-- **Header English, commentary Vietnamese.** Example: `## 3. Block A — Welcome`,
+- **Heading tiếng Anh, prose tiếng Việt.** Ví dụ: `## 3. Block A — Welcome`,
   body "Đây là màn hình đầu tiên...".
-- **Strings verbatim.** Wrap all UI text in backticks. **Never** translate or
-  paraphrase. `Đăng nhập bằng Google` stays as-is.
-- **Bounds table format** — 5 columns: `Class | Bounds | Clickable | Text | Content-desc`.
-- **Mermaid flowchart with `subgraph`** by block — `render_nav.py` does this
-  automatically.
-- **Dates absolute, ISO-8601** — `2026-04-21`, never "yesterday" or "last week".
-- **No emoji** unless user explicitly asks.
-- **Anchor markers** `{#<feature>/<type>/<name>}` after every section header that
-  declares a graph node (screen / block / component / api / data_model /
-  criterion / invariant).
+- **String trích nguyên văn.** Wrap mọi UI text trong backtick. **KHÔNG**
+  bao giờ dịch hay paraphrase. `Đăng nhập bằng Google` giữ nguyên.
+- **Format bảng bounds** — 5 cột: `Class | Bounds | Clickable | Text | Content-desc`.
+- **Mermaid flowchart với `subgraph`** theo block — `render_nav.py` tự làm.
+- **Date tuyệt đối, ISO-8601** — `2026-04-21`, không bao giờ "yesterday" hay
+  "tuần trước".
+- **Không emoji** trừ khi user yêu cầu rõ.
+- **Anchor marker** `{#<feature>/<type>/<name>}` sau mọi section heading khai
+  báo node graph (screen / block / component / api / data_model / criterion /
+  invariant).
 
 ---
 
-## Subagents bundled with this skill
+## Subagent đi kèm skill này
 
-| Agent | When the orchestrator delegates | Model | Tools |
+| Agent | Khi orchestrator delegate | Model | Tools |
 |---|---|---|---|
 | `app-explorer` | Phase 2 capture loop — drive device, capture, build graph | sonnet | Bash, Read |
-| `spec-writer` | Phase 5 prose generation — fill 3 markdown files | opus | Read, Write, Grep, Bash |
+| `spec-writer` | Phase 5 sinh prose — điền 3 file markdown | opus | Read, Write, Grep, Bash |
 
-The orchestrator (this skill) only handles Phase 0 + 1 + 3 + 4 + 6 + 7 directly.
-Phase 2 and 5 are pure subagent work to keep main context lean.
+Orchestrator (skill này) chỉ tự xử lý Phase 0 + 1 + 3 + 4 + 6 + 7. Phase 2 và
+5 hoàn toàn của subagent để main context gọn.
 
 ---
 
-## Failure modes + recovery
+## Failure mode + recovery
 
-| Failure | Diagnosis | Action |
+| Failure | Chẩn đoán | Action |
 |---|---|---|
-| `Portal not responding` | Portal accessibility service died (sleep timeout) | Re-run `setup_portal.sh §5-6` |
-| Screenshot shows bounding boxes | Element-inspect overlay is on | Manual Portal app overlay toggle (instructions in `setup_portal.sh §7`) |
-| `screen_hash` collision (2 different screens, same id) | Top-N text signatures collided | Bump `profile.capture.hash_window` from 6 → 10, re-capture; or override `--block <letter>` |
-| Coverage MISS labels look spurious | Word-match heuristic too loose; or labels too short | Make edge labels more descriptive in capture `--via` text |
-| Validator V6 (broken refs) | Missing screen anchor declared in nav_edges | Either capture the missing screen or remove the dangling edge from frontmatter |
-| Tab strip horizontally scrollable, only 3 visible | Common Compose pattern | h-swipe `(800,Y)→(100,Y)` to reveal hidden tabs before tap |
-| `am start` resets tab state | Activity recreated | Use `monkey -p <pkg> -c LAUNCHER 1` to bring-to-front instead |
-| BACK trapped on a Compose modal | Likely `v01` activity wizard step | Add activity name to `profile.modals.back_traps`; agent uses swipe-down |
+| `Portal not responding` | Portal accessibility service chết (sleep timeout) | Chạy lại `setup_portal.sh §5-6` |
+| Screenshot hiện bounding box | Element-inspect overlay đang bật | Toggle overlay thủ công trong Portal app (hướng dẫn ở `setup_portal.sh §7`) |
+| `screen_hash` đụng (2 screen khác nhau, cùng id) | Top-N text signature trùng | Bump `profile.capture.hash_window` từ 6 → 10, capture lại; hoặc override `--block <letter>` |
+| Coverage MISS label trông giả | Heuristic word-match quá lỏng; hoặc label quá ngắn | Viết edge label mô tả hơn ở `--via` lúc capture |
+| Validator V6 (broken refs) | Thiếu screen anchor đã khai trong nav_edges | Capture screen còn thiếu hoặc xoá edge dangling khỏi frontmatter |
+| Tab strip scroll ngang, chỉ thấy 3 tab | Pattern Compose phổ biến | h-swipe `(800,Y)→(100,Y)` để hé tab giấu trước khi tap |
+| `am start` reset tab state | Activity bị recreate | Dùng `monkey -p <pkg> -c LAUNCHER 1` để bring-to-front thay vì restart |
+| BACK bị nuốt trên Compose modal | Có khả năng wizard step `v01` activity | Thêm tên activity vào `profile.modals.back_traps`; agent sẽ swipe-down |
 
 ---
 
-## Anti-patterns (do NOT do these)
+## Anti-pattern (KHÔNG được làm)
 
-- ❌ Don't auto-`pm clear` the app to "reset" — that destroys the user's onboarding state.
-- ❌ Don't assume bottom-nav coords from another app — every app's viewport is different.
-- ❌ Don't paraphrase UI text in observations.md — verbatim or omit.
-- ❌ Don't write specs from screenshots alone — always read the JSON dump for bounds + a11y signals.
-- ❌ Don't `git commit` automatically — user must duyệt.
-- ❌ Don't tap the universal blocklist (Subscribe / Logout / etc.) even if user asks — explain the risk.
-- ❌ Don't broadcast `TOGGLE_OVERLAY` and assume it worked — Portal v0.6.5 silently ignores it; if screenshots show boxes, follow the manual fallback.
-- ❌ Don't move spec files out of `<profile.feature_root>/<feature>/` — graph builder + MCP server expect the layout.
+- ❌ Đừng auto-`pm clear` app để "reset" — phá state onboarding của user.
+- ❌ Đừng giả định toạ độ bottom-nav từ app khác — viewport mỗi app khác nhau.
+- ❌ Đừng paraphrase UI text trong observations.md — nguyên văn hoặc bỏ.
+- ❌ Đừng viết spec chỉ từ screenshot — luôn đọc JSON dump để lấy bounds + a11y.
+- ❌ Đừng `git commit` tự động — user phải duyệt.
+- ❌ Đừng tap blocklist universal (Subscribe / Logout / ...) kể cả khi user yêu
+  cầu — giải thích rủi ro.
+- ❌ Đừng broadcast `TOGGLE_OVERLAY` rồi giả định nó work — Portal v0.6.5 silent
+  bỏ qua; nếu screenshot vẫn có box, làm theo fallback thủ công.
+- ❌ Đừng move file spec ra khỏi `<profile.feature_root>/<feature>/` — graph
+  builder + MCP server đều assume layout này.
+- ❌ Đừng viết spec bằng tiếng Anh — output luôn là tiếng Việt (giữ technical
+  term tiếng Anh, xem section đầu file này).
 
 ---
 
 ## Quick command reference
 
 ```bash
-# Bootstrap a new app project (Phase 0)
+# Bootstrap project app mới (Phase 0)
 re-spec-init
 
-# Set up Portal on the device (one-time per device)
+# Set up Portal trên device (1 lần / device)
 bash $(re-spec-paths --shell setup_portal.sh)
 
-# Capture a single screen
+# Capture 1 screen
 re-spec-capture <feature> <screen_label>
 re-spec-capture <feature> <screen_label> \
   --from <parent_label> --via "tap:(X,Y) <description>"
 
-# Adb interactions
+# Adb interaction
 adb shell input tap X Y
 adb shell input swipe X1 Y1 X2 Y2 800
 adb shell input keyevent KEYCODE_BACK
@@ -469,13 +488,13 @@ re-spec-validate
 re-spec-query feature <feature>
 re-spec-query acceptance <feature>
 
-# MCP server (auto-loaded by .mcp.json; manual register at user scope:)
+# MCP server (auto-load qua .mcp.json; register thủ công ở user scope:)
 bash $(re-spec-paths --shell register-mcp-user.sh)
 ```
 
-All `re-spec-*` commands above are installed by `pip install re-spec-mobile` (or
-`bash INSTALL.sh` which runs the pip install + symlinks the skill itself). After
-install, the commands are on PATH globally.
+Mọi lệnh `re-spec-*` ở trên được cài bằng `pip install re-spec-mobile` (hoặc
+`bash INSTALL.sh` chạy pip install + symlink luôn skill). Sau khi cài, lệnh
+sẵn trên PATH global.
 
-Bundled shell scripts (setup_portal.sh, register-mcp-user.sh) live inside the
-installed package; resolve their path with `re-spec-paths --shell <script_name>`.
+Shell script đi kèm (setup_portal.sh, register-mcp-user.sh) nằm trong package
+đã cài; resolve path bằng `re-spec-paths --shell <script_name>`.

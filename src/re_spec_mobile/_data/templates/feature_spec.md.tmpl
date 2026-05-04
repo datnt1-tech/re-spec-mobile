@@ -17,7 +17,7 @@ components:
     name: {{ComponentClassName}}
     section_line: 200
     screens: [{{feature_slug}}/screen/{{screen_a_slug}}]
-    reuse_key: {{component_slug}}                 # set if component is reused cross-feature
+    reuse_key: {{component_slug}}                 # set nếu component reuse cross-feature
 apis:
   - id: {{feature_slug}}/api/{{api_slug}}
     method: GET
@@ -32,7 +32,7 @@ reuses: []
 criteria:
   - id: {{feature_slug}}/criterion/ac_01
     section_line: 700
-    summary: "Landing renders within 1s on cold start"
+    summary: "Landing render trong 1s lúc cold start"
 invariants: []
 questions: []
 related:
@@ -47,6 +47,8 @@ related:
 > trên device {{device_label}}, locale `{{locale}}`.
 > Engineer đọc file này phải có đủ thông tin để rebuild toàn bộ feature mà KHÔNG
 > cần chạy app gốc.
+>
+> Output viết bằng tiếng Việt, technical term giữ tiếng Anh (xem I18N_GLOSSARY).
 
 ---
 
@@ -72,17 +74,17 @@ related:
 
 | Mục tiêu | Mô tả | KPI |
 |---|---|---|
-| _(writer fills 3-6 product goals)_ | _(why this matters)_ | _(measurable threshold)_ |
+| _(writer fill 3-6 product goal)_ | _(why this matters)_ | _(threshold đo được)_ |
 
 ### 2.2. Flow Tổng Quan
 
-_(writer pastes the navigation Mermaid from spec.md.tmpl §N or describes in prose)_
+_(writer paste navigation Mermaid từ spec.md.tmpl §N hoặc mô tả bằng prose)_
 
 ### 2.3. Metrics tracking
 
 | Event | Trigger | Properties |
 |---|---|---|
-| _(writer fills events that should be tracked from this feature)_ | _(when fired)_ | _(payload fields)_ |
+| _(writer fill event nên track từ feature này)_ | _(khi nào fire)_ | _(field payload)_ |
 
 ---
 
@@ -92,9 +94,9 @@ _(writer pastes the navigation Mermaid from spec.md.tmpl §N or describes in pro
 
 #### Components rendered
 
-| Component | reuse_key | Notes |
+| Component | reuse_key | Note |
 |---|---|---|
-| {{ComponentClassName}} | `{{component_slug}}` | _(local to this feature, or shared with X)_ |
+| {{ComponentClassName}} | `{{component_slug}}` | _(local feature này, hoặc shared với X)_ |
 
 #### State
 
@@ -108,12 +110,12 @@ data class {{ScreenAState}}(
 
 #### Data dependencies
 
-- API: `{{feature_slug}}/api/{{api_slug}}` (loaded on first composition)
-- Local cache: _(writer fills if any)_
+- API: `{{feature_slug}}/api/{{api_slug}}` (load lúc first composition)
+- Local cache: _(writer fill nếu có)_
 
 #### Interactions
 
-_(writer fills tap targets + side effects from observations)_
+_(writer fill tap target + side effect từ observations)_
 
 ---
 
@@ -121,7 +123,7 @@ _(writer fills tap targets + side effects from observations)_
 
 ### {{InvariantName}} {#{{feature_slug}}/invariant/{{invariant_slug}}}
 
-_(writer fills: short statement of the invariant + why it matters + how to verify)_
+_(writer fill: statement ngắn của invariant + lý do quan trọng + cách verify)_
 
 ---
 
@@ -158,22 +160,22 @@ data class {{ModelClassName}}(
 
 ## 7. Open questions
 
-- Q-01 {#{{feature_slug}}/question/q_01}: _(writer fills: anything ambiguous discovered during capture
-  that needs PM/design clarification before implementing)_
+- Q-01 {#{{feature_slug}}/question/q_01}: _(writer fill: bất cứ thứ gì mơ hồ
+  phát hiện trong capture cần PM/design clarify trước khi implement)_
 
 ---
 
 ## 8. Acceptance criteria
 
-- AC-01 {#{{feature_slug}}/criterion/ac_01}: Landing renders within 1s on cold start.
-- AC-02 {#{{feature_slug}}/criterion/ac_02}: _(writer fills more — each MUST be testable)_
+- AC-01 {#{{feature_slug}}/criterion/ac_01}: Landing render trong 1s lúc cold start.
+- AC-02 {#{{feature_slug}}/criterion/ac_02}: _(writer fill thêm — mỗi cái PHẢI testable)_
 
 ---
 
 ## 9. References
 
-- `{{feature_slug}}_observations.md` — raw per-screen capture transcripts
-- `{{feature_slug}}_spec.md` — block-level flow + state machine
+- `{{feature_slug}}_observations.md` — transcript capture per-screen thô
+- `{{feature_slug}}_spec.md` — flow block-level + state machine
 - Source captures: `{{screens_relpath}}/`
 - a11y dumps: `{{dumps_relpath}}/`
 - Nav graph snapshot: `{{raw_relpath}}/nav_graph.json`

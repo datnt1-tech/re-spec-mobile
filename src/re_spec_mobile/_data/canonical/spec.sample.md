@@ -77,6 +77,24 @@ related:
 
 # BibleChat — Today Tab Flow Specification
 
+> **⚠️ CANONICAL — REFERENCE STRUCTURE, KHÔNG PHẢI TEMPLATE NGÔN NGỮ.**
+> File này gốc từ project BibleChat (gen trước khi enforce policy "output
+> tiếng Việt"). Mọi spec MỚI phải viết bằng tiếng Việt với technical term
+> tiếng Anh — xem `docs/I18N_GLOSSARY.md`.
+>
+> Khi reference file này, agent `spec-writer` PHẢI mimic:
+> - Frontmatter shape (blocks, nav_edges, states, related)
+> - Body section ordering (1. Tổng Quan → 2. Hard facts → 3+. Block A/B/...
+>   → N. Navigation graph → N+1. State machine → N+2. Bug / quirk)
+> - Anchor marker `{#feature/block/x}` sau heading
+> - Mermaid `flowchart TD` cho nav graph, `LR` cho state machine
+> - Bảng interaction 3 cột (Tap target | Centre | Result)
+>
+> KHÔNG mimic:
+> - Prose paragraph bằng tiếng Anh — luôn dịch sang tiếng Việt
+> - Section heading "## 1. Overview" → ghi "## 1. Tổng Quan"
+> - Section heading "## N. Observed bugs / quirks" → ghi "## N. Bug / quirk đã quan sát"
+
 **Package**: `com.basmo.BibleChat`
 **App version**: `4.3.10`
 **Activity**: `com.basmo.BibleChat/com.bookvitals.bibleChat.main.DashboardActivity` → fragment `navigation_daily_journey`

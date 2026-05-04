@@ -1,15 +1,18 @@
 ---
 name: SPEC_SCHEMA
-description: Canonical schema for bible-agent spec files. Defines YAML frontmatter + anchor ID convention for 3 layers (observations, flow, implementation). Source of truth for build_graph / spec_query / validate_spec tools.
+description: Schema canonical cho file spec. Định nghĩa YAML frontmatter + anchor ID convention cho 4 layer (scope, observations, flow, implementation, coverage_report). Source of truth cho tool build_graph / spec_query / validate_spec.
 version: 1
 last_updated: 2026-04-20
 ---
 
-# Spec Schema — bible-agent
+# Spec Schema — re-spec-mobile
 
 > Đây là **schema bắt buộc** cho mọi file spec trong `spec/feature/<feature>/`.
 > Tool `validate_spec.py` sẽ reject file không tuân thủ. Agent + viz + graph
 > builder đều dựa vào schema này.
+>
+> **Ngôn ngữ output**: prose tiếng Việt, technical term + identifier giữ tiếng
+> Anh (xem `docs/I18N_GLOSSARY.md`).
 
 ---
 
@@ -233,8 +236,8 @@ screens:
 ### Body structure
 
 - Mỗi screen = 1 `## Screen NN — <label>` section
-- Phải có **bounds table** (5 cột: `Class | Bounds | Clickable | Text | Content-desc`)
-- Phải có section `### Observed behaviour` + `### Transitions`
+- Phải có **bảng bounds** (5 cột: `Class | Bounds | Clickable | Text | Content-desc`)
+- Phải có section `### Hành vi quan sát` + `### Observed transitions`
 - Section `## Cross-screen invariants` ở cuối (optional)
 
 ### Section anchor convention
@@ -295,13 +298,13 @@ related:
 
 ### Body structure
 
-- `## 1. Overview`
+- `## 1. Tổng Quan`
 - `## 2. Hard facts before anything else`
 - `## 3. Block A — <name> {#today/block/a}`
 - ... block B, C, D
-- `## <N>. Navigation graph` — paste Mermaid output từ `render_nav.py`
+- `## <N>. Navigation graph` — paste output Mermaid từ `render_nav.py`
 - `## <N+1>. State machine` — Mermaid flowchart cho lifecycle
-- `## <N+2>. Observed bugs / quirks`
+- `## <N+2>. Bug / quirk đã quan sát`
 
 ### Anchor rules trong body
 
@@ -375,19 +378,19 @@ related:
 ### Body structure (9 section chuẩn)
 
 1. `## 1. Metadata` — bảng metadata
-2. `## 2. Tổng Quan` — goals + KPI + flow + metrics
-3. `## 3. Chi Tiết Từng Screen` — per-screen components + states + data deps. Mỗi screen dùng anchor `{#<feature>/screen/<name>}`
+2. `## 2. Tổng Quan` — goal + KPI + flow + metric
+3. `## 3. Chi Tiết Từng Screen` — per-screen component + state + data dependency. Mỗi screen dùng anchor `{#<feature>/screen/<name>}`
 4. `## 4. Cross-screen invariants` — mỗi invariant `### <name> {#<feature>/invariant/<name>}`
-5. `## 5. API contract draft` — mỗi API `### <METHOD> <path> {#<feature>/api/<name>}` + **JSON Schema fenced block với ```json annotation**
-6. `## 6. Data model summary` — mỗi model `### <ClassName> {#<feature>/data_model/<name>}` + **Kotlin fenced block ```kotlin**
+5. `## 5. API contract draft` — mỗi API `### <METHOD> <path> {#<feature>/api/<name>}` + **fenced block JSON Schema với ```json annotation**
+6. `## 6. Data model summary` — mỗi model `### <ClassName> {#<feature>/data_model/<name>}` + **fenced block Kotlin ```kotlin**
 7. `## 7. Open questions` — mỗi question `- Q-NN {#<feature>/question/q_nn}: <text>`
 8. `## 8. Acceptance criteria` — mỗi AC `- AC-NN {#<feature>/criterion/ac_nn}: <text>`
-9. `## 9. References` — links
+9. `## 9. References` — link
 
-### Code block rules (quan trọng cho Phase 6)
+### Code block rule (quan trọng cho Phase 6)
 
 - **API**: dùng ` ```json` với field `$schema`, `type`, `properties` để `extract_contracts.py` parse thành OpenAPI
-- **Data model**: dùng ` ```kotlin` với `data class` keyword để `extract_contracts.py` copy nguyên block sang `spec/_contracts/kotlin/`
+- **Data model**: dùng ` ```kotlin` với keyword `data class` để `extract_contracts.py` copy nguyên block sang `spec/_contracts/kotlin/`
 
 ---
 
@@ -470,7 +473,7 @@ Khi spec reference feature khác (vd Today mention Explore overlay):
 
 - Dùng anchor đầy đủ của feature kia: `explore/screen/overlay`
 - Edge trong `nav_edges` set flag `external: true`
-- `related` field ở frontmatter list tất cả file spec khác được reference
+- Field `related` trong frontmatter list mọi file spec khác được reference
 
 ---
 
@@ -480,21 +483,21 @@ Khi spec reference feature khác (vd Today mention Explore overlay):
 
 | Edge type | Từ | Tới | Ghi chú |
 |---|---|---|---|
-| `navigates_to` | screen | screen | từ `nav_edges` trong flow layer |
+| `navigates_to` | screen | screen | từ `nav_edges` trong layer flow |
 | `belongs_to_block` | screen | block | từ `blocks.screens` |
 | `belongs_to_cluster` | screen | cluster | từ `clusters[].must_visit` (scope) |
 | `belongs_to_feature` | any | feature node | auto |
 | `renders_component` | screen | component | từ `components.screens` |
 | `reuses_component` | component | component | từ `reuses` |
-| `triggers_api` | screen | api | optional, từ markdown body scan |
+| `triggers_api` | screen | api | optional, từ scan markdown body |
 | `returns_model` | api | data_model | từ `apis.returns` |
 | `verified_by` | screen | criterion | optional |
-| `references` | any | any | generic cross-ref từ `related` |
+| `references` | any | any | cross-ref generic từ `related` |
 | `has_state` | feature | state | từ `states` |
 | `out_of_scope` | feature | cluster | cluster với `in_scope: false` (scope) |
-| `gap` | scope | screen | must_visit screen chưa capture (coverage_report) |
-| `drift` | coverage_report | screen | screen captured ngoài scope (coverage_report) |
-| `verifies_scope` | coverage_report | scope | report verifies scope version (coverage_report) |
+| `gap` | scope | screen | screen must_visit chưa capture (coverage_report) |
+| `drift` | coverage_report | screen | screen capture ngoài scope (coverage_report) |
+| `verifies_scope` | coverage_report | scope | report verify scope version (coverage_report) |
 
 ---
 
@@ -512,19 +515,19 @@ Khi spec reference feature khác (vd Today mention Explore overlay):
 
 ---
 
-## 10. Validation rules (enforced bởi `validate_spec.py`)
+## 10. Validation rule (enforce bởi `validate_spec.py`)
 
 1. Frontmatter YAML parse được
-2. `feature` match folder name
-3. `layer` ∈ `{observations, flow, implementation, overview}`
-4. `anchor` unique toàn repo — **trừ screen anchors same-feature cross-layer**
-   (obs + impl của cùng feature có thể declare cùng `<feature>/screen/x`,
+2. `feature` match tên folder
+3. `layer` ∈ `{scope, observations, flow, implementation, coverage_report, overview}`
+4. `anchor` unique toàn repo — **trừ anchor screen cross-layer cùng feature**
+   (obs + impl của cùng feature có thể khai cùng `<feature>/screen/x`,
    `build_graph.py` merge 2 khai báo thành 1 node)
 5. `last_updated` ISO 8601 date
 6. Mọi anchor reference (`screens[].anchor`, `nav_edges.from/to`, `related`,
    `reuses.*`, `returns`…) phải tồn tại trong graph (sau khi build)
-7. Mọi header `## X {#anchor}` phải có anchor ID hợp lệ (slash format)
-8. Implementation + overview layer phải có `status`
+7. Mọi header `## X {#anchor}` phải có anchor ID hợp lệ (format slash)
+8. Layer implementation + overview phải có `status`
 9. Không duplicate anchor trong cùng file
 
 ---

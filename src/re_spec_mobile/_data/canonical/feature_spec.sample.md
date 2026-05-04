@@ -67,9 +67,25 @@ related:
 
 # BibleChat — Today Feature Cluster Spec (Implementation-Ready)
 
-> **⚠️ FILE NÀY LÀ SPEC CHÍNH THỨC ĐỂ CODE.**
-> Mọi thông tin đều được trích xuất từ reverse-engineering app thật (`com.basmo.BibleChat` v4.3.10) trên device `8A5X0M2H8` (Pixel, Android, locale `vi-VN`).
-> Engineer đọc file này phải có đủ thông tin để rebuild toàn bộ Today feature mà KHÔNG cần chạy app gốc.
+> **⚠️ CANONICAL — REFERENCE STRUCTURE, KHÔNG PHẢI TEMPLATE NGÔN NGỮ.**
+> File này gốc từ project BibleChat (gen trước khi enforce policy "output
+> tiếng Việt thuần"). Mọi spec MỚI phải viết bằng tiếng Việt với technical term
+> tiếng Anh — xem `docs/I18N_GLOSSARY.md`.
+>
+> Khi reference file này, agent `spec-writer` PHẢI mimic:
+> - Frontmatter shape (screens, components, apis, data_models, reuses,
+>   criteria, invariants, questions, related)
+> - 9 section body chuẩn: Metadata / Tổng Quan / Chi Tiết Từng Screen /
+>   Cross-screen invariants / API contract draft / Data model summary /
+>   Open questions / Acceptance criteria / References
+> - Anchor marker `{#feature/<type>/<name>}` sau heading mỗi node graph
+> - Code fence ` ```json ` cho API JSON Schema, ` ```kotlin ` cho data class
+> - Component `reuse_key` + list `reuses` nếu phát hiện cross-feature reuse
+>
+> Mọi thông tin trích từ reverse-engineering app thật (`com.basmo.BibleChat` v4.3.10)
+> trên device `8A5X0M2H8` (Pixel, Android, locale `vi-VN`).
+> Engineer đọc file này phải có đủ thông tin để rebuild toàn bộ Today feature mà
+> KHÔNG cần chạy app gốc.
 
 ---
 

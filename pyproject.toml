@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "re-spec-mobile"
-version = "1.0.0"
-description = "Reverse-engineer mobile apps into 3-layer markdown specs (observations + flow + implementation) using droidrun Portal + adb. Includes 3 PM-controlled QA gates: scope contract, coverage report, spec review."
+version = "1.1.0"
+description = "Reverse-engineer mobile apps into 3-layer markdown specs (observations + flow + implementation) using droidrun Portal + adb. Includes 3 PM-controlled QA gates: scope contract, coverage report, spec review. Vietnamese-language output (technical terms in English)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Internal" }

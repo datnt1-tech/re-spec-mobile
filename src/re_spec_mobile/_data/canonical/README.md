@@ -1,33 +1,37 @@
 # Canonical reference samples
 
-These files are the **gold-standard 3-layer specs** the `spec-writer` agent
-uses as a style + structure reference when drafting specs for a brand-new app
-that has no prior `canonical_feature` of its own.
+Các file này là **bộ spec 3 layer chuẩn vàng** mà agent `spec-writer` dùng làm
+reference style + structure khi draft spec cho 1 app hoàn toàn mới chưa có
+`canonical_feature` riêng.
 
-| File | Purpose | Layer | Lines |
+| File | Mục đích | Layer | Lines |
 |---|---|---|---|
-| `observations.sample.md` | Raw bounds tables + transitions, behaviour notes | observations | ~700 |
-| `spec.sample.md` | Block-by-block flow + state machine + nav graph | flow | ~535 |
-| `feature_spec.sample.md` | 9-section impl spec (metadata → KPI → API → AC) | implementation | ~975 |
-| `SPEC_SCHEMA.md` | Schema contract for frontmatter + anchors + edge types | — | ~490 |
+| `observations.sample.md` | Bảng bounds thô + transition + note hành vi | observations | ~700 |
+| `spec.sample.md` | Flow block-by-block + state machine + nav graph | flow | ~535 |
+| `feature_spec.sample.md` | Spec impl 9 section (metadata → KPI → API → AC) | implementation | ~975 |
+| `SPEC_SCHEMA.md` | Schema contract cho frontmatter + anchor + edge type | — | ~490 |
 
-**Origin:** copied from the `bible-agent` project's Today feature (the most
-mature spec at the time the skill was packaged). The Today tab was chosen
-because it exercises every layer's hardest case:
+**Origin:** copy từ feature Today của project `bible-agent` (spec mature nhất
+lúc đóng gói skill). Tab Today được chọn vì exercise mọi case khó nhất của mỗi
+layer:
 
-- Observations: 17 distinct UI states with sticky-header / scroll-segment table
-- Flow: 12 functional blocks with cross-cluster navigation + state machine
-- Implementation: 5 reusable components + 6 KPI metrics + 12 acceptance criteria
+- Observations: 17 trạng thái UI khác biệt với bảng sticky-header / scroll-segment
+- Flow: 12 functional block với navigation cross-cluster + state machine
+- Implementation: 5 component reusable + 6 KPI metric + 12 acceptance criterion
 
-**How the writer agent uses them:**
+**Writer agent dùng chúng thế nào:**
 
-1. If `profile.reference.canonical_feature` is set, read that feature's 3 files
-   from the user's project as primary reference.
-2. Otherwise, read these files. Mimic the section ordering, table density,
-   bullet voice (header English, commentary Vietnamese), Mermaid usage, anchor
-   marker `{#feature/type/name}` placement, code-block fences (json/kotlin).
-3. Never paraphrase UI strings — wrap verbatim in backticks like the samples do.
+1. Nếu `profile.reference.canonical_feature` đã set, đọc 3 file của feature đó
+   từ project user làm primary reference.
+2. Ngược lại, đọc các file này. Mimic thứ tự section, density bảng, voice
+   bullet (heading tiếng Anh, prose tiếng Việt), cách dùng Mermaid, vị trí
+   anchor marker `{#feature/type/name}`, code-block fence (json/kotlin).
+3. Không bao giờ paraphrase UI string — wrap nguyên văn trong backtick như sample.
 
-**Do not edit these files** unless updating the canonical baseline for all
-future apps that use the skill. To replace with a different sample, swap the
-files in place and bump the SKILL.md version.
+**Đừng edit các file này** trừ khi update canonical baseline cho mọi app
+tương lai dùng skill. Để thay bằng sample khác, swap file tại chỗ và bump
+version SKILL.md.
+
+**Lưu ý ngôn ngữ**: canonical samples viết bằng tiếng Việt với technical term
+tiếng Anh (xem `docs/I18N_GLOSSARY.md`). Nếu canonical override của user là
+tiếng khác, writer agent ưu tiên ngôn ngữ của canonical user.

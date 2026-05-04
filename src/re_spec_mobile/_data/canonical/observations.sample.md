@@ -112,6 +112,23 @@ related:
 
 # BibleChat — Today Tab Screen-by-Screen Observations
 
+> **⚠️ CANONICAL — REFERENCE STRUCTURE, KHÔNG PHẢI TEMPLATE NGÔN NGỮ.**
+> File này gốc từ project BibleChat (gen trước khi enforce policy "output
+> tiếng Việt"). Mọi spec MỚI phải viết bằng tiếng Việt với technical term
+> tiếng Anh — xem `docs/I18N_GLOSSARY.md`.
+>
+> Khi reference file này, agent `spec-writer` PHẢI mimic:
+> - Cấu trúc section + thứ tự ("Layout" → bảng visible element → bảng
+>   transition → "Hành vi quan sát" → "Note")
+> - Density bảng bounds (5 cột)
+> - Anchor marker `{#feature/screen/name}` sau heading
+> - UI string trong backtick nguyên văn
+>
+> KHÔNG mimic:
+> - Prose paragraphs bằng tiếng Anh (viết tiếng Việt)
+> - Section heading "### Observed behaviour" → ghi `### Hành vi quan sát`
+> - Section heading "### Notes" → ghi `### Note`
+
 **Target package**: `com.basmo.BibleChat`
 **App version**: `4.3.10`
 **Device**: 8A5X0M2H8 (Pixel, Android — `vi-VN` locale)
