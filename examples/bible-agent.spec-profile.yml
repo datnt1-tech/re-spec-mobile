@@ -1,0 +1,95 @@
+# .spec-profile.yml — sample for bible-agent project
+#
+# This is the dogfood profile for the bible-agent repository
+# (com.basmo.BibleChat reverse-engineering project). Drop this file at the
+# bible-agent repo root as `.spec-profile.yml` to migrate the existing tooling
+# to use re-spec-mobile.
+#
+# Values mirror the hard-coded constants in the original bible-agent/spec/tools/
+# scripts so capture.py / coverage_check.py / build_graph.py behave identically
+# after the migration.
+
+version: 1
+
+app:
+  name: BibleChat
+  package: com.basmo.BibleChat
+  main_activity: com.bookvitals.bibleChat.main.DashboardActivity
+  min_sdk: 26
+  target_sdk: 34
+  app_version: "4.3.10"
+  stack: compose
+
+device:
+  serial: ""                                      # capture-time pixel was 8A5X0M2H8; leave empty for any device
+  viewport: [1080, 2160]                          # Pixel 3 portrait
+  locale: vi-VN
+  density: 440
+
+navigation:
+  type: bottom_nav
+  tabs:
+    - id: chat
+      label: Chat
+      resource_id: navigation_home
+      center: [108, 1918]
+    - id: community
+      label: Community
+      resource_id: live_prayers_screen
+      center: [324, 1918]
+    - id: today
+      label: Today
+      resource_id: navigation_daily_journey
+      center: [540, 1918]
+      default: true                               # cold launch lands here
+    - id: bible
+      label: Bible
+      resource_id: bible_screen_navbar
+      center: [756, 1918]
+    - id: explore
+      label: Explore
+      resource_id: navigation_new_study
+      center: [972, 1918]
+
+blocklist:
+  use_defaults: true
+  custom:
+    # Universal defaults already cover Subscribe/Buy/Logout/Restore/Continue/Share.
+    # These are BibleChat-specific extras observed during prior capture sessions:
+    - "Try for Free"                              # paywall CTA
+    - "Update reminder"                           # commits the reminder schedule (side effect)
+    - "Link account"                              # OAuth flow → external
+    - "Manage subscriptions"                      # → Play Store
+
+paths:
+  spec_root: spec
+  feature_root: spec/feature
+  screens_root: spec/screens
+  dumps_root: spec/ui_dumps
+  raw_root: spec/_raw
+  graph_root: spec/_graph
+  contracts_root: spec/_contracts
+
+reference:
+  canonical_feature: today                        # bible-agent's own gold-standard
+  style: opinionated
+
+scroll:
+  default_swipe_duration_ms: 800
+  long_swipe_duration_ms: 1200
+  edge_swipe_x: 200                               # avoid floating audio mini-player on Bible/Today
+
+settle:
+  default_ms: 800
+  modal_ms: 1500
+  ai_generation_ms: 10000                         # Personal Plan Wizard AI generation pause
+
+capture:
+  filename_pattern: "screen_{nn:02d}_{label}"
+  hash_window: 6
+
+modals:
+  back_traps:
+    # Personal Plan Wizard sheet — KEYCODE_BACK trapped, dismiss only via swipe-down.
+    - "v01"
+  swipe_down_dismiss: true

@@ -1,0 +1,214 @@
+# profile.schema.yml — JSON Schema (in YAML form) for .spec-profile.yml
+#
+# Validate per-app config used by re-spec-mobile skill + bundled tools + agents.
+# Validator: `python tools/profile_loader.py --validate <path>` (uses jsonschema if installed,
+# otherwise falls back to manual required-key check).
+
+$schema: "http://json-schema.org/draft-07/schema#"
+title: re-spec-mobile project profile
+description: |
+  Adapter config for an Android (eventually iOS) app being reverse-engineered into
+  3-layer markdown specs. Lives at the project root as `.spec-profile.yml`.
+
+type: object
+required: [version, app, device, navigation, paths]
+additionalProperties: false
+
+properties:
+
+  version:
+    type: integer
+    enum: [1]
+    description: Schema version. Bump when schema breaks back-compat.
+
+  app:
+    type: object
+    required: [name, package, main_activity]
+    additionalProperties: false
+    properties:
+      name:
+        type: string
+        description: Human-readable app name (used in spec titles + markdown heads).
+      package:
+        type: string
+        pattern: "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+        description: Android package id (e.g. com.example.app).
+      main_activity:
+        type: string
+        description: Fully-qualified main Activity (e.g. com.example.app.MainActivity).
+      min_sdk:
+        type: integer
+        minimum: 14
+      target_sdk:
+        type: integer
+        minimum: 14
+      app_version:
+        type: string
+        description: Observed app version at capture time (e.g. 4.3.10). Annotation only.
+      stack:
+        type: string
+        enum: [compose, view_xml, mixed, flutter, react_native, unknown]
+        default: unknown
+        description: |
+          UI stack hint. Affects how the writer agent interprets dumps —
+          Compose obfuscates class names, RN/Flutter widgets often miss a11y tree.
+
+  device:
+    type: object
+    required: [viewport]
+    additionalProperties: false
+    properties:
+      serial:
+        type: string
+        default: ""
+        description: adb serial. Empty = auto-detect single connected device.
+      viewport:
+        type: array
+        items: {type: integer, minimum: 100}
+        minItems: 2
+        maxItems: 2
+        description: "[width, height] in pixels. Used for swipe coord scaling."
+      locale:
+        type: string
+        default: en-US
+        description: Device locale (BCP-47).
+      density:
+        type: integer
+        minimum: 120
+        description: dpi (optional).
+
+  navigation:
+    type: object
+    required: [type]
+    additionalProperties: false
+    properties:
+      type:
+        type: string
+        enum: [bottom_nav, drawer, top_tabs, none, custom]
+      tabs:
+        type: array
+        description: Required for bottom_nav / top_tabs; ignored otherwise.
+        items:
+          type: object
+          required: [id, label, center]
+          additionalProperties: false
+          properties:
+            id: {type: string, pattern: "^[a-z][a-z0-9_]*$"}
+            label: {type: string}
+            resource_id:
+              type: string
+              description: Android resource-id (without `<pkg>:id/` prefix).
+            center:
+              type: array
+              items: {type: integer}
+              minItems: 2
+              maxItems: 2
+              description: "[x, y] tap coordinate of the tab cell."
+            default:
+              type: boolean
+              default: false
+              description: Tab cold-launch lands on. Exactly one tab should set true.
+
+  blocklist:
+    type: object
+    additionalProperties: false
+    description: |
+      Patterns to skip during coverage_check + capture loop. Matched against
+      element text or content-description, case-insensitive, regex.
+    properties:
+      use_defaults:
+        type: boolean
+        default: true
+        description: Include the universal-safe defaults (Subscribe / Buy / Logout / ...).
+      custom:
+        type: array
+        items: {type: string}
+        description: Extra app-specific patterns (literal strings or regex).
+
+  paths:
+    type: object
+    description: |
+      All paths relative to the project root (dir containing .spec-profile.yml).
+      Defaults match bible-agent layout for easy migration.
+    additionalProperties: false
+    properties:
+      spec_root:        {type: string, default: "spec"}
+      feature_root:     {type: string, default: "spec/feature"}
+      screens_root:     {type: string, default: "spec/screens"}
+      dumps_root:       {type: string, default: "spec/ui_dumps"}
+      raw_root:         {type: string, default: "spec/_raw"}
+      graph_root:       {type: string, default: "spec/_graph"}
+      contracts_root:   {type: string, default: "spec/_contracts"}
+
+  reference:
+    type: object
+    additionalProperties: false
+    description: How spec-writer agent picks reference style for prose.
+    properties:
+      canonical_feature:
+        type: [string, "null"]
+        default: null
+        description: |
+          Feature folder name to use as gold-standard reference. If null,
+          spec-writer falls back to skill-bundled canonical/ samples.
+      style:
+        type: string
+        enum: [opinionated, minimal]
+        default: opinionated
+        description: |
+          opinionated = full 3-layer (observations + flow + feature_spec).
+          minimal     = 1-file feature_spec only (smaller apps / single dev).
+
+  scroll:
+    type: object
+    additionalProperties: false
+    properties:
+      default_swipe_duration_ms: {type: integer, default: 800,  minimum: 100}
+      long_swipe_duration_ms:    {type: integer, default: 1200, minimum: 100}
+      edge_swipe_x:
+        type: integer
+        default: 200
+        description: |
+          Fallback x-coord for swipes when center is occluded by floating overlay
+          (audio mini-player, FAB, etc.). Pick mép trái value < viewport[0]/4.
+
+  settle:
+    type: object
+    additionalProperties: false
+    properties:
+      default_ms:        {type: integer, default: 800,   minimum: 0}
+      modal_ms:          {type: integer, default: 1500,  minimum: 0}
+      ai_generation_ms:  {type: integer, default: 10000, minimum: 0}
+
+  capture:
+    type: object
+    additionalProperties: false
+    properties:
+      filename_pattern:
+        type: string
+        default: "screen_{nn:02d}_{label}"
+        description: |
+          Capture filename stem template. Variables: {nn} sequence number,
+          {label} caller-supplied label, {feature} feature name.
+      hash_window:
+        type: integer
+        default: 6
+        minimum: 1
+        maximum: 20
+        description: Number of leading text/desc signatures used in screen_hash.
+
+  modals:
+    type: object
+    additionalProperties: false
+    description: App-specific modal dismiss strategies.
+    properties:
+      back_traps:
+        type: array
+        description: |
+          Activity names where KEYCODE_BACK is trapped — agent must use
+          swipe-down instead. e.g. Compose `v01` wizard sheets in BibleChat.
+        items: {type: string}
+      swipe_down_dismiss:
+        type: boolean
+        default: true
+        description: Allow swipe-down as fallback dismiss for trapped modals.

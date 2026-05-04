@@ -1,0 +1,115 @@
+---
+feature: {{feature_slug}}
+layer: scope
+anchor: {{feature_slug}}/scope/root
+title: {{app_name}} — {{feature_title}} Scope Contract
+last_updated: '{{date_iso}}'
+status: draft                                      # → signed_off after PM review
+signed_off_by: ""                                  # PM email when status=signed_off
+signed_off_at: ""                                  # ISO date when status=signed_off
+scope_version: 1                                   # bump on each PM-approved revision
+
+clusters:
+  # IN scope — must be captured
+  - id: {{feature_slug}}/cluster/{{cluster_in_slug}}
+    name: "{{cluster_in_name}}"
+    section_line: 30
+    in_scope: true
+    must_visit:                                    # MANDATORY — agent will not return DONE without these
+      - {{feature_slug}}/screen/{{screen_a_slug}}
+      - {{feature_slug}}/screen/{{screen_b_slug}}
+    optional_visit:                                # nice-to-have — capture if time permits
+      - {{feature_slug}}/screen/{{screen_a_slug}}_back
+
+  # OUT of scope — explicitly skip
+  - id: {{feature_slug}}/cluster/{{cluster_out_slug}}
+    name: "{{cluster_out_name}}"
+    section_line: 60
+    in_scope: false
+    reason: "{{out_reason}}"
+
+questions:                                         # PM unknowns — block capture until clarified
+  - id: {{feature_slug}}/question/scope_q_01
+    section_line: 80
+    summary: "{{open_question}}"
+
+acceptance_capture:                                # capture phase done = all of these true
+  - "Tất cả must_visit có 1 dump JSON + 1 PNG mỗi anchor"
+  - "coverage_check báo 0 MISS sau khi exclude blocklist + out_of_scope clusters"
+  - "Mỗi cluster in_scope có ≥ 1 transition edge trong nav_graph"
+
+related:
+  - {{feature_slug}}/observations/root              # forward-reference to layer 1
+---
+
+# {{app_name}} — {{feature_title}} Scope Contract
+
+> **Layer 0 / 4 — PM scope contract.**
+> File này được viết TRƯỚC khi auto-test chạy. PM ký sign-off bằng cách:
+> 1. Đọc cluster IN/OUT, must_visit list, acceptance criteria
+> 2. Trả lời các Open Question trong §3
+> 3. Set `status: signed_off`, fill `signed_off_by` + `signed_off_at`
+> 4. Bump `scope_version` nếu sửa scope sau khi đã sign-off lần trước
+>
+> Capture agent (`app-explorer`) refuses to start unless `status=signed_off`.
+
+---
+
+## 1. In scope
+
+### Cluster: {{cluster_in_name}} {#{{feature_slug}}/cluster/{{cluster_in_slug}}}
+
+**Mục đích**: _(PM mô tả 1-2 câu what/why của cluster này)_
+
+**Must visit** (capture phase WILL FAIL nếu thiếu):
+
+- `{{feature_slug}}/screen/{{screen_a_slug}}` — _(short label)_
+- `{{feature_slug}}/screen/{{screen_b_slug}}` — _(short label)_
+
+**Optional visit** (capture nếu agent có budget):
+
+- `{{feature_slug}}/screen/{{screen_a_slug}}_back` — _(eg. back-press behavior)_
+
+**Edge cases cần thử**:
+
+- _(eg. "tap back trên Q3 phải về Q2, không về landing")_
+
+---
+
+## 2. Out of scope
+
+### Cluster: {{cluster_out_name}} {#{{feature_slug}}/cluster/{{cluster_out_slug}}}
+
+**Reason**: {{out_reason}}
+
+**Note**: agent sẽ KHÔNG tap vào cluster này. Nếu cần spec sau, tạo scope_version mới.
+
+---
+
+## 3. Unknowns
+
+PM trả lời inline. Nếu chưa trả lời → capture phase BLOCKED cho đến khi rõ.
+
+### Q-01: {{open_question}} {#{{feature_slug}}/question/scope_q_01}
+
+**PM answer**: _(fill in)_
+
+---
+
+## 4. Acceptance criteria for capture phase
+
+Capture phase được coi là DONE khi tất cả các criteria sau đều pass:
+
+1. ✅ Tất cả must_visit có dump JSON + PNG
+2. ✅ `coverage_check` báo 0 MISS sau khi exclude blocklist + out_of_scope
+3. ✅ Mỗi cluster in_scope có ≥ 1 transition edge
+
+Coverage report (Gate 2) sẽ verify từng criterion bằng dữ liệu thực tế.
+
+---
+
+## 5. Sign-off log
+
+| Version | Date | PM | Change |
+|---|---|---|---|
+| 1 | {{date_iso}} | _(pending)_ | Initial scope draft |

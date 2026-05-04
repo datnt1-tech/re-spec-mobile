@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "re-spec-mobile"
+version = "1.0.0"
+description = "Reverse-engineer mobile apps into 3-layer markdown specs (observations + flow + implementation) using droidrun Portal + adb. Includes 3 PM-controlled QA gates: scope contract, coverage report, spec review."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Internal" }
+authors = [
+    { name = "datnt", email = "primarchdatnt1997@gmail.com" },
+]
+keywords = [
+    "android",
+    "reverse-engineering",
+    "spec",
+    "ui-automation",
+    "droidrun",
+    "claude-code",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Testing",
+]
+
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Optional droidrun integration. Required only if user wants to use droidrun's
+# higher-level Python APIs alongside this toolkit. Capture loop itself bypasses
+# droidrun.AdbTools.get_state because of Portal v0.6.x schema mismatch (see
+# capture.py docstring).
+device = [
+    "droidrun>=0.3,<0.6",
+]
+
+# Full install: device deps + dev tools
+dev = [
+    "droidrun>=0.3,<0.6",
+    "pytest>=7",
+    "build>=1.0",
+]
+
+[project.scripts]
+# All Python tools exposed as console commands. After `pip install`, user runs
+# `re-spec-capture <feature> <name>` instead of `python /path/to/capture.py ...`.
+re-spec-init             = "re_spec_mobile.init_project:main"
+re-spec-profile          = "re_spec_mobile.profile_loader:main"
+re-spec-scope            = "re_spec_mobile.scope_loader:main"
+re-spec-capture          = "re_spec_mobile.capture:main"
+re-spec-coverage-check   = "re_spec_mobile.coverage_check:main"
+re-spec-coverage-report  = "re_spec_mobile.coverage_report:main"
+re-spec-render-nav       = "re_spec_mobile.render_nav:main"
+re-spec-observations     = "re_spec_mobile.observations_tmpl:main"
+re-spec-build-graph      = "re_spec_mobile.build_graph:main"
+re-spec-validate         = "re_spec_mobile.validate_spec:main"
+re-spec-query            = "re_spec_mobile.spec_query:main"
+re-spec-mcp-server       = "re_spec_mobile.mcp_server:serve"
+
+# Convenience helpers for accessing bundled data + shell scripts
+re-spec-paths            = "re_spec_mobile.paths:main"
+
+[project.urls]
+Documentation = "https://github.com/example/re-spec-mobile/tree/main/docs"
+Source        = "https://github.com/example/re-spec-mobile"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"re_spec_mobile" = [
+    "_data/templates/*.yml",
+    "_data/templates/*.tmpl",
+    "_data/canonical/*.md",
+    "_data/_shell/*.sh",
+    "_data/_shell/*.txt",
+]

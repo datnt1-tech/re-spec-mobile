@@ -1,0 +1,77 @@
+# .spec-profile.yml — re-spec-mobile project profile.
+#
+# Created by `init_project.py`. Edit the placeholders, then validate:
+#     python <skill_tools>/profile_loader.py --validate
+#
+# Layer purpose:
+#   - app:         human / Android identity
+#   - device:      hardware coordinates the auto-test agent depends on
+#   - navigation:  bottom_nav / drawer / top_tabs structure for tab-aware drives
+#   - blocklist:   patterns the capture loop must NEVER tap
+#   - paths:       where 3-layer specs land (defaults match bible-agent layout)
+#   - reference:   gold-standard sample for the writer agent to mimic
+#   - scroll/settle: timing tweaks per app's animation budget
+#   - capture:     filename + screen-hash knobs
+#   - modals:      Compose `v01` BACK-traps + dismiss strategies
+
+version: 1
+
+app:
+  name: "REPLACE_ME"
+  package: com.example.app
+  main_activity: com.example.app.MainActivity
+  min_sdk: 24
+  target_sdk: 34
+  app_version: "1.0.0"
+  stack: compose                                  # compose | view_xml | mixed | flutter | react_native | unknown
+
+device:
+  serial: ""                                      # empty = auto-detect single device
+  viewport: [1080, 2160]                          # px [w, h]; `adb shell wm size`
+  locale: en-US
+  density: 440                                    # `adb shell wm density`
+
+navigation:
+  type: bottom_nav                                # bottom_nav | drawer | top_tabs | none | custom
+  tabs: []                                        # fill after capturing main activity
+  # Example tab entry:
+  # - id: home
+  #   label: Home
+  #   resource_id: nav_home
+  #   center: [216, 1918]
+  #   default: true                               # cold-launch lands on this tab
+
+blocklist:
+  use_defaults: true                              # include universal-safe patterns (Subscribe / Buy / Logout / ...)
+  custom: []                                      # app-specific extras, literals or regex
+
+paths:
+  spec_root: spec
+  feature_root: spec/feature
+  screens_root: spec/screens
+  dumps_root: spec/ui_dumps
+  raw_root: spec/_raw
+  graph_root: spec/_graph
+  contracts_root: spec/_contracts
+
+reference:
+  canonical_feature: null                         # feature folder name, or null → fall back to skill canonical/
+  style: opinionated                              # opinionated (3-layer) | minimal (1-file)
+
+scroll:
+  default_swipe_duration_ms: 800
+  long_swipe_duration_ms: 1200
+  edge_swipe_x: 200                               # mép trái x-coord when center is occluded by floating overlay
+
+settle:
+  default_ms: 800
+  modal_ms: 1500
+  ai_generation_ms: 10000
+
+capture:
+  filename_pattern: "screen_{nn:02d}_{label}"
+  hash_window: 6                                  # # of leading text/desc signatures used in screen_hash
+
+modals:
+  back_traps: []                                  # activities where KEYCODE_BACK is trapped (use swipe-down)
+  swipe_down_dismiss: true

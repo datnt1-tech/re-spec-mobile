@@ -1,0 +1,179 @@
+---
+feature: {{feature_slug}}
+layer: implementation
+anchor: {{feature_slug}}/implementation/root
+title: {{app_name}} — {{feature_title}} Feature Cluster Spec (Implementation-Ready)
+last_updated: '{{date_iso}}'
+locale: {{locale}}
+status: draft
+app_version: {{app_version}}
+screens:
+  - anchor: {{feature_slug}}/screen/{{screen_a_slug}}
+    letter: A
+    name: "{{screen_a_label}}"
+    section_line: 100
+components:
+  - id: {{feature_slug}}/component/{{component_slug}}
+    name: {{ComponentClassName}}
+    section_line: 200
+    screens: [{{feature_slug}}/screen/{{screen_a_slug}}]
+    reuse_key: {{component_slug}}                 # set if component is reused cross-feature
+apis:
+  - id: {{feature_slug}}/api/{{api_slug}}
+    method: GET
+    path: /v1/{{feature_slug}}/{{path_param}}
+    section_line: 400
+    returns: {{feature_slug}}/data_model/{{model_slug}}
+data_models:
+  - id: {{feature_slug}}/data_model/{{model_slug}}
+    name: {{ModelClassName}}
+    section_line: 500
+reuses: []
+criteria:
+  - id: {{feature_slug}}/criterion/ac_01
+    section_line: 700
+    summary: "Landing renders within 1s on cold start"
+invariants: []
+questions: []
+related:
+  - {{feature_slug}}/observations/root
+  - {{feature_slug}}/flow/root
+---
+
+# {{app_name}} — {{feature_title}} Feature Cluster Spec (Implementation-Ready)
+
+> **⚠️ FILE NÀY LÀ SPEC CHÍNH THỨC ĐỂ CODE.**
+> Mọi thông tin trích từ reverse-engineering app `{{package}}` v{{app_version}}
+> trên device {{device_label}}, locale `{{locale}}`.
+> Engineer đọc file này phải có đủ thông tin để rebuild toàn bộ feature mà KHÔNG
+> cần chạy app gốc.
+
+---
+
+## 1. Metadata
+
+| Field | Value |
+|---|---|
+| **App Name** | {{app_name}} |
+| **Package** | `{{package}}` |
+| **Feature Cluster** | {{feature_title}} |
+| **Min SDK** | {{min_sdk}} |
+| **Target SDK** | {{target_sdk}} |
+| **App version captured** | {{app_version}} |
+| **Last Updated** | {{date_iso}} |
+| **Status** | draft |
+| **Related specs** | `{{feature_slug}}_observations.md`, `{{feature_slug}}_spec.md` |
+
+---
+
+## 2. Tổng Quan
+
+### 2.1. Mục Tiêu
+
+| Mục tiêu | Mô tả | KPI |
+|---|---|---|
+| _(writer fills 3-6 product goals)_ | _(why this matters)_ | _(measurable threshold)_ |
+
+### 2.2. Flow Tổng Quan
+
+_(writer pastes the navigation Mermaid from spec.md.tmpl §N or describes in prose)_
+
+### 2.3. Metrics tracking
+
+| Event | Trigger | Properties |
+|---|---|---|
+| _(writer fills events that should be tracked from this feature)_ | _(when fired)_ | _(payload fields)_ |
+
+---
+
+## 3. Chi Tiết Từng Screen
+
+### Screen A — {{screen_a_label}} {#{{feature_slug}}/screen/{{screen_a_slug}}}
+
+#### Components rendered
+
+| Component | reuse_key | Notes |
+|---|---|---|
+| {{ComponentClassName}} | `{{component_slug}}` | _(local to this feature, or shared with X)_ |
+
+#### State
+
+```kotlin
+data class {{ScreenAState}}(
+  val loading: Boolean = false,
+  val data: {{ModelClassName}}? = null,
+  val error: Throwable? = null,
+)
+```
+
+#### Data dependencies
+
+- API: `{{feature_slug}}/api/{{api_slug}}` (loaded on first composition)
+- Local cache: _(writer fills if any)_
+
+#### Interactions
+
+_(writer fills tap targets + side effects from observations)_
+
+---
+
+## 4. Cross-screen invariants
+
+### {{InvariantName}} {#{{feature_slug}}/invariant/{{invariant_slug}}}
+
+_(writer fills: short statement of the invariant + why it matters + how to verify)_
+
+---
+
+## 5. API contract draft
+
+### GET /v1/{{feature_slug}}/{{path_param}} {#{{feature_slug}}/api/{{api_slug}}}
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["id", "title"],
+  "properties": {
+    "id":     {"type": "string"},
+    "title":  {"type": "string"}
+  }
+}
+```
+
+---
+
+## 6. Data model summary
+
+### {{ModelClassName}} {#{{feature_slug}}/data_model/{{model_slug}}}
+
+```kotlin
+data class {{ModelClassName}}(
+  val id: String,
+  val title: String,
+)
+```
+
+---
+
+## 7. Open questions
+
+- Q-01 {#{{feature_slug}}/question/q_01}: _(writer fills: anything ambiguous discovered during capture
+  that needs PM/design clarification before implementing)_
+
+---
+
+## 8. Acceptance criteria
+
+- AC-01 {#{{feature_slug}}/criterion/ac_01}: Landing renders within 1s on cold start.
+- AC-02 {#{{feature_slug}}/criterion/ac_02}: _(writer fills more — each MUST be testable)_
+
+---
+
+## 9. References
+
+- `{{feature_slug}}_observations.md` — raw per-screen capture transcripts
+- `{{feature_slug}}_spec.md` — block-level flow + state machine
+- Source captures: `{{screens_relpath}}/`
+- a11y dumps: `{{dumps_relpath}}/`
+- Nav graph snapshot: `{{raw_relpath}}/nav_graph.json`
