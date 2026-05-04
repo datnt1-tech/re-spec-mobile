@@ -14,76 +14,222 @@ screens:
 - anchor: today/screen/profile_drawer
   letter: B
   name: Profile Drawer
-  section_line: 210
+  section_line: 213
 - anchor: today/screen/explore_overlay
   letter: C
-  name: Explore Overlay (sparkle icon)
-  section_line: 242
+  name: Explore Overlay
+  section_line: 245
 - anchor: today/screen/calendar
   letter: D
-  name: Calendar (full-month grid)
-  section_line: 275
+  name: Calendar
+  section_line: 278
 - anchor: today/screen/subtitle_info_tooltip
   letter: E
   name: Subtitle / Info Tooltip
-  section_line: 310
-- anchor: today/screen/day_state_empty_screens
+  section_line: 313
+- anchor: today/screen/today_empty_states
   letter: F
   name: Day-State Empty Screens
-  section_line: 336
-- anchor: today/screen/reminder_editor
+  section_line: 339
+- anchor: today/screen/change_reminder_bottom_sheet_time_picker
   letter: G
   name: Reminder Editor
-  section_line: 363
+  section_line: 366
 - anchor: today/screen/today_tab_paywall
   letter: H
-  name: Today-tab Paywall (Exclusive Deal)
-  section_line: 406
-- anchor: today/screen/session_reader
+  name: Today-tab Paywall
+  section_line: 409
+- anchor: today/screen/verse_session_reader
   letter: I
-  name: Session Reader (Verse / Devotional / Prayer)
-  section_line: 451
+  name: Session Reader
+  section_line: 454
 - anchor: today/screen/day_complete_celebration
   letter: J
   name: Day-Complete Celebration
-  section_line: 509
+  section_line: 512
 - anchor: today/screen/peace_and_calm_bottom_sheet
   letter: K
   name: Peace and Calm Bottom Sheet
-  section_line: 538
+  section_line: 541
 - anchor: today/screen/available_points
   letter: L
-  name: Available Points (Light Points store)
-  section_line: 564
-components: []
-apis: []
-data_models: []
-reuses: []
-criteria: []
+  name: Available Points
+  section_line: 567
+components:
+- id: today/component/session_reader
+  name: SessionReader
+  section_line: 480
+  screens:
+  - today/screen/verse_session_reader
+  - today/screen/devotional_reader
+  - today/screen/prayer_reader
+  reuse_key: session_reader
+- id: today/component/week_strip
+  name: WeekStrip
+  section_line: 168
+- id: today/component/exclusive_deal_banner
+  name: ExclusiveDealBanner
+  section_line: 220
+- id: today/component/light_points_badge
+  name: LightPointsBadge
+  section_line: 175
+- id: today/component/day_cell
+  name: DayCell
+  section_line: 195
+apis:
+- id: today/api/get_journey
+  method: GET
+  path: /v1/journey/{date}
+  section_line: 657
+  returns: today/data_model/today_payload
+- id: today/api/post_session_complete
+  method: POST
+  path: /v1/journey/{date}/cards/{cardId}/complete
+  section_line: 712
+  returns: today/data_model/session_complete_response
+- id: today/api/get_promo
+  method: GET
+  path: /v1/promo/active
+  section_line: 728
+  returns: today/data_model/promo_payload
+- id: today/api/get_user
+  method: GET
+  path: /v1/user
+  section_line: 743
+  returns: today/data_model/user_payload
+- id: today/api/put_reminder
+  method: PUT
+  path: /v1/user/reminder
+  section_line: 758
+  returns: today/data_model/reminder_payload
+- id: today/api/get_store_lp
+  method: GET
+  path: /v1/store/light-points
+  section_line: 768
+  returns: today/data_model/store_payload
+data_models:
+- id: today/data_model/today_payload
+  name: TodayPayload
+  section_line: 657
+- id: today/data_model/today_session_content
+  name: SessionContent
+  section_line: 482
+- id: today/data_model/today_state
+  name: TodayState
+  section_line: 805
+- id: today/data_model/daily_reminder
+  name: DailyReminder
+  section_line: 396
+- id: today/data_model/wallet
+  name: Wallet
+  section_line: 595
+reuses:
+- component: today/component/session_reader
+  used_by:
+  - today/screen/verse_session_reader
+  - today/screen/devotional_reader
+  - today/screen/prayer_reader
+criteria:
+- id: today/criterion/ac_01
+  section_line: 882
+  summary: Cold launch lands on Today tab
+- id: today/criterion/ac_02
+  section_line: 884
+  summary: Header sticky behaviour
+- id: today/criterion/ac_03
+  section_line: 886
+  summary: Week strip renders 7 days of current week
+- id: today/criterion/ac_04
+  section_line: 887
+  summary: Tap past day with content opens reader
+- id: today/criterion/ac_05
+  section_line: 888
+  summary: Calendar opens via streak pill
+- id: today/criterion/ac_06
+  section_line: 889
+  summary: Subtitle and i icon open same tooltip
+- id: today/criterion/ac_07
+  section_line: 890
+  summary: Light Points badge displays balance
+- id: today/criterion/ac_08
+  section_line: 891
+  summary: Single-expansion invariant
+- id: today/criterion/ac_09
+  section_line: 892
+  summary: Reading session marks complete
+- id: today/criterion/ac_10
+  section_line: 893
+  summary: Completing last session triggers Day-Complete
+- id: today/criterion/ac_11
+  section_line: 894
+  summary: F1 empty state interpolation
+- id: today/criterion/ac_12
+  section_line: 895
+  summary: Change reminder opens sheet + picker
+- id: today/criterion/ac_13
+  section_line: 896
+  summary: Exclusive Deal countdown live + opens paywall
+- id: today/criterion/ac_14
+  section_line: 897
+  summary: Profile Drawer pre-fills from server
+- id: today/criterion/ac_15
+  section_line: 898
+  summary: Tooltip Popup focusable false
+- id: today/criterion/ac_16
+  section_line: 899
+  summary: Currency consistent thousands separator
+- id: today/criterion/ac_17
+  section_line: 900
+  summary: Bottom nav visibility rules
+invariants:
+- id: today/invariant/session_reader_reuse
+  section_line: 619
+- id: today/invariant/single_expansion
+  section_line: 624
+- id: today/invariant/progress_denominator
+  section_line: 628
+- id: today/invariant/sticky_header
+  section_line: 633
+- id: today/invariant/lp_vs_chat_questions
+  section_line: 637
+- id: today/invariant/bottom_nav_visibility
+  section_line: 644
+- id: today/invariant/date_state_machine
+  section_line: 651
+questions:
+- id: today/question/q_01
+  section_line: 870
+- id: today/question/q_02
+  section_line: 871
+- id: today/question/q_03
+  section_line: 872
+- id: today/question/q_04
+  section_line: 873
+- id: today/question/q_05
+  section_line: 874
+- id: today/question/q_06
+  section_line: 875
+- id: today/question/q_07
+  section_line: 876
+- id: today/question/q_08
+  section_line: 877
 related:
-- today/flow/root
 - today/observations/root
+- today/flow/root
 ---
 
 # BibleChat — Today Feature Cluster Spec (Implementation-Ready)
 
-> **⚠️ CANONICAL — REFERENCE STRUCTURE, KHÔNG PHẢI TEMPLATE NGÔN NGỮ.**
-> File này gốc từ project BibleChat (gen trước khi enforce policy "output
-> tiếng Việt thuần"). Mọi spec MỚI phải viết bằng tiếng Việt với technical term
-> tiếng Anh — xem `docs/I18N_GLOSSARY.md`.
+> **⚠️ CANONICAL — REFERENCE STRUCTURE.**
+> Mọi spec MỚI viết bằng tiếng Việt với technical term tiếng Anh — xem
+> `docs/I18N_GLOSSARY.md`. Mimic frontmatter shape (screens, components, apis,
+> data_models, reuses, criteria, invariants, questions, related) + 9 section
+> body chuẩn (Metadata / Tổng Quan / Chi Tiết Từng Screen / Cross-screen
+> invariants / API contract / Data model / Open questions / Acceptance criteria
+> / References).
 >
-> Khi reference file này, agent `spec-writer` PHẢI mimic:
-> - Frontmatter shape (screens, components, apis, data_models, reuses,
->   criteria, invariants, questions, related)
-> - 9 section body chuẩn: Metadata / Tổng Quan / Chi Tiết Từng Screen /
->   Cross-screen invariants / API contract draft / Data model summary /
->   Open questions / Acceptance criteria / References
-> - Anchor marker `{#feature/<type>/<name>}` sau heading mỗi node graph
-> - Code fence ` ```json ` cho API JSON Schema, ` ```kotlin ` cho data class
-> - Component `reuse_key` + list `reuses` nếu phát hiện cross-feature reuse
->
-> Mọi thông tin trích từ reverse-engineering app thật (`com.basmo.BibleChat` v4.3.10)
-> trên device `8A5X0M2H8` (Pixel, Android, locale `vi-VN`).
+> Mọi thông tin trích từ reverse-engineering app thật (`com.basmo.BibleChat`
+> v4.3.10) trên device `8A5X0M2H8` (Pixel, Android, locale `vi-VN`).
 > Engineer đọc file này phải có đủ thông tin để rebuild toàn bộ Today feature mà
 > KHÔNG cần chạy app gốc.
 
@@ -101,7 +247,7 @@ related:
 | **Min SDK** | 26 (Android 8.0) |
 | **Target SDK** | 34 |
 | **App version captured** | 4.3.10 |
-| **Author** | Auto-generated from reverse spec |
+| **Author** | Auto-generated từ reverse spec |
 | **Last Updated** | 2026-04-16 |
 | **Status** | Approved — Ready for Development |
 | **Related specs** | `onboarding_feature_spec.md`, `chat_feature_spec.md`, `community_feature_spec.md`, `today_observations.md`, `today_spec.md` |
@@ -127,7 +273,7 @@ related:
 APP START
   │
   ▼
-DashboardActivity (default tab = navigation_daily_journey)
+DashboardActivity (tab mặc định = navigation_daily_journey)
   │
   ▼
   ┌────────────────────────────────────────────────────────────────┐
@@ -135,24 +281,24 @@ DashboardActivity (default tab = navigation_daily_journey)
   │  ┌──────────── Sticky header ────────────┐                       │
   │  │ Avatar · Title · Sparkle · Streak pill │                       │
   │  │ Subtitle theme · Info i · Light Points │                       │
-  │  │ Week strip (M T W T F S S, 7 cells)    │                       │
+  │  │ Week strip (M T W T F S S, 7 cell)     │                       │
   │  │ Progress today / N%                    │                       │
   │  └────────────────────────────────────────┘                       │
-  │  Cards (scrollable, 5 fixed):                                     │
+  │  Card (scrollable, 5 cố định):                                    │
   │    1. Exclusive Deal banner (countdown)                           │
   │    2. YOUR VERSE (1 MIN)        ──┐                               │
-  │    3. PERSONALIZED DEVOTIONAL (3 MIN) ├─ session cards            │
+  │    3. PERSONALIZED DEVOTIONAL (3 MIN) ├─ session card             │
   │    4. PRAYER OF THE DAY (2 MIN) ──┘                               │
   │    5. PEACE AND CALM (one-shot bottom sheet)                      │
   └────────────────────────────────────────────────────────────────────┘
    │
    ├── Avatar          → Profile Drawer (Block B)
-   ├── Sparkle         → Explore overlay (Block C, cross-cluster directory)
+   ├── Sparkle         → Explore overlay (Block C, directory cross-cluster)
    ├── Streak pill     → Calendar full-month (Block D)
-   │                       └── day with content → Verse Reader (Block I read-only)
+   │                       └── day có content → Verse Reader (Block I read-only)
    ├── Subtitle / i    → Tooltip overlay (Block E)
    ├── Light Points    → Available Points / Light Points store (Block L)
-   ├── Week-strip day  → switch displayed day (re-renders Block A or its empty state F)
+   ├── Week-strip day  → switch day display (re-render Block A hoặc empty state F)
    ├── Empty state ──── Change reminder → Reminder sheet (Block G) → Material time picker
    ├── Exclusive Deal  → Paywall (Block H)
    ├── Verse Listen / Read / Chat   → Reader (Block I) → Chat cluster
@@ -191,8 +337,8 @@ DashboardActivity (default tab = navigation_daily_journey)
 | **Đường dẫn** | Bottom-nav `Today` |
 | **Activity** | `DashboardActivity` |
 | **Fragment** | render bên trong `navHostFragmentContainerViewDashboard` |
-| **Tech** | Compose (semantic-only nodes, no resource-ids) |
-| **Backgrounds** | Header có gradient olive-mustard; cards area là dark surface với card backgrounds image-aware (ocean cho Verse, hands cho Devotional/Prayer, leaf cho Peace) |
+| **Tech** | Compose (node semantic-only, không có resource-id) |
+| **Backgrounds** | Header có gradient olive-mustard; vùng card là dark surface với background card image-aware (ocean cho Verse, hands cho Devotional/Prayer, leaf cho Peace) |
 
 #### Layout structure
 
@@ -211,7 +357,7 @@ DashboardActivity (default tab = navigation_daily_journey)
 │  └──┴──┴──┴──┴──┴──┴──┘                   │
 │  Progress today                       75%  │  y=623..707
 │  ████████████████░░░░░                     │  y=...
-├────────────────────────────────────────────┤  y≈770 (top of cards)
+├────────────────────────────────────────────┤  y≈770 (top vùng cards)
 │ CARDS (vertical scroll)                     │
 │  ┌──────────────────────────────────────┐  │
 │  │ 🎁 Exclusive Deal      23:58:20       │  │
@@ -241,52 +387,52 @@ DashboardActivity (default tab = navigation_daily_journey)
 
 | Component | States | Behaviour |
 |---|---|---|
-| Header avatar | Static letter (1st char of nickname). Long-press: not tested. | Tap → Profile Drawer (Screen B) |
-| Title | `Today's Journey` if selected day = system today; otherwise `MMM DD's Journey` (e.g. `Apr 15's Journey`) | Read-only |
-| Sparkle icon | Always visible | Tap → Explore overlay (Screen C) |
-| Streak pill | Shows fire 🔥 + integer `currentStreak` | Tap → Calendar (Screen D) |
-| Subtitle | Per-day theme string (server-supplied) | Tap → Tooltip (Screen E) |
-| Info `ⓘ` icon | Always visible | Tap → same Tooltip |
-| Light Points badge | Yellow circle + integer `lightPointsBalance` | Tap → Available Points (Screen L) |
-| Week-strip day cells | Each cell: weekday letter + day-of-month number; visual ring/fill encodes status (today=filled, has-content=ring, dimmed=non-interactive) | Tap behaviour per status (see table below) |
-| Progress bar | Linear progress, value `dayProgressPercent` (0..100), label `Progress today` (or `Progress for MMM DD`), value rendered as `N%` with no decimal | Read-only |
-| Card: Exclusive Deal | Single visual: gift icon + label + countdown timer (mm:ss not used; format `HH:mm:ss` server-supplied or computed from `dealEndsAt - now`) | Tap → Paywall (Screen H) |
-| Card: session (Verse/Devotional/Prayer) | Two states: collapsed (header strip with `DONE` chip when complete, `⌄` chevron when not) and expanded (title + tag pills + Listen + Read) | Tap header → toggle expand (single-expansion invariant). Tap Listen / Read inside → Reader (Screen I) |
-| Card: Peace and Calm | One-shot card — no expand state | Tap → Bottom sheet (Screen K) |
+| Header avatar | Static letter (ký tự đầu của nickname). Long-press: chưa test. | Tap → Profile Drawer (Screen B) |
+| Title | `Today's Journey` nếu day đã chọn = today của system; ngược lại `MMM DD's Journey` (vd `Apr 15's Journey`) | Read-only |
+| Sparkle icon | Luôn visible | Tap → Explore overlay (Screen C) |
+| Streak pill | Hiện fire 🔥 + integer `currentStreak` | Tap → Calendar (Screen D) |
+| Subtitle | String theme per-day (server cấp) | Tap → Tooltip (Screen E) |
+| Icon Info `ⓘ` | Luôn visible | Tap → cùng Tooltip |
+| Light Points badge | Circle vàng + integer `lightPointsBalance` | Tap → Available Points (Screen L) |
+| Week-strip day cell | Mỗi cell: chữ weekday + số day-of-month; ring/fill visual encode status (today=filled, has-content=ring, dimmed=non-interactive) | Tap behaviour theo status (xem bảng dưới) |
+| Progress bar | Linear progress, value `dayProgressPercent` (0..100), label `Progress today` (hoặc `Progress for MMM DD`), value render `N%` không có decimal | Read-only |
+| Card: Exclusive Deal | 1 visual: gift icon + label + countdown timer (mm:ss không dùng; format `HH:mm:ss` server cấp hoặc compute từ `dealEndsAt - now`) | Tap → Paywall (Screen H) |
+| Card: session (Verse/Devotional/Prayer) | 2 state: collapsed (header strip với chip `DONE` khi complete, chevron `⌄` khi chưa) và expanded (title + tag pill + Listen + Read) | Tap header → toggle expand (invariant single-expansion). Tap Listen / Read trong → Reader (Screen I) |
+| Card: Peace and Calm | Card one-shot — không có expand state | Tap → Bottom sheet (Screen K) |
 
-#### Week-strip day-cell tap rules
+#### Quy tắc tap day-cell Week-strip
 
-| Cell status | Visual | Tap behaviour |
+| Status cell | Visual | Behaviour tap |
 |---|---|---|
-| Today (system date) | Filled circle, white number | Switch to today's content (or empty state F.1 if locked) |
-| Past **with completed sessions** | Ring around number | Switch to that day's reader content (re-read mode) |
-| Past **never started** | Dimmed grey, no ring | No-op (silent) |
-| Future | Outlined, normal text | Switch to empty state F.2 (`Check back tomorrow`) |
-| Currently selected | Yellow ring/fill | (re-tap = no-op) |
+| Today (system date) | Circle fill, số trắng | Switch sang content today (hoặc empty state F.1 nếu lock) |
+| Quá khứ **có session hoàn thành** | Ring quanh số | Switch sang content reader của day đó (mode re-read) |
+| Quá khứ **chưa start** | Xám dim, không ring | No-op (silent) |
+| Tương lai | Outline, text bình thường | Switch sang empty state F.2 (`Check back tomorrow`) |
+| Đang selected | Ring/fill vàng | (re-tap = no-op) |
 
 #### Data dependencies
 
 | Field | Source | Refresh trigger |
 |---|---|---|
-| `nickname` | `User.nickname` | On profile edit |
-| `currentStreak` | `User.streak.current` | After Day-Complete |
-| `longestStreak` | `User.streak.longest` | After Day-Complete |
-| `lightPointsBalance` | `User.wallet.lightPoints` | After session complete, after store purchase, after Day-Complete |
-| `selectedDate` | local UI state (defaults to system today) | On day-strip / calendar tap |
-| `weekDays[]` | computed from `selectedDate` (Mon..Sun of that week) | When selectedDate crosses a week boundary |
-| `dayPlan(selectedDate)` | `GET /journey/{date}` | On selectedDate change |
+| `nickname` | `User.nickname` | Khi edit profile |
+| `currentStreak` | `User.streak.current` | Sau Day-Complete |
+| `longestStreak` | `User.streak.longest` | Sau Day-Complete |
+| `lightPointsBalance` | `User.wallet.lightPoints` | Sau session complete, sau store purchase, sau Day-Complete |
+| `selectedDate` | local UI state (mặc định = today system) | Khi tap day-strip / calendar |
+| `weekDays[]` | compute từ `selectedDate` (Mon..Sun của tuần đó) | Khi selectedDate vượt biên tuần |
+| `dayPlan(selectedDate)` | `GET /journey/{date}` | Khi selectedDate đổi |
 | `dayPlan.theme` | server | per `dayPlan` |
-| `dayPlan.progressPercent` | server (0/33/67/100 typically) | per session-complete event |
+| `dayPlan.progressPercent` | server (thường 0/33/67/100) | per event session-complete |
 | `dayPlan.cards[]` | server | per `dayPlan` |
-| `exclusiveDeal` | `GET /promo/active` | App launch + when Today opens; countdown rendered locally from `endsAt` |
+| `exclusiveDeal` | `GET /promo/active` | App launch + khi Today open; countdown render local từ `endsAt` |
 
 #### Empty states
 
-| When | Render |
+| Khi nào | Render |
 |---|---|
 | `selectedDate == today AND !todayUnlocked` | Screen F.1 |
 | `selectedDate > today` | Screen F.2 |
-| `selectedDate < today AND !pastStarted` | (cell isn't tappable; state shouldn't be reachable) |
+| `selectedDate < today AND !pastStarted` | (cell không tappable; state đáng ra unreachable) |
 
 ---
 
@@ -296,29 +442,31 @@ DashboardActivity (default tab = navigation_daily_journey)
 
 | Field | Value |
 |---|---|
-| **Entry** | Tap avatar on header (118, 213) |
-| **Container** | `DrawerLayout` (Material) sliding in from left |
-| **Width** | ~92% of viewport (`[0,0][990,2028]`); right `[990,1080]` is scrim with `desc=Close navigation menu` |
-| **Dismiss** | `KEYCODE_BACK` or tap scrim |
-| **Tech** | mostly Compose inside the drawer |
+| **Entry** | Tap avatar trên header (118, 213) |
+| **Container** | `DrawerLayout` (Material) slide từ trái |
+| **Width** | ~92% viewport (`[0,0][990,2028]`); phải `[990,1080]` là scrim với `desc=Close navigation menu` |
+| **Dismiss** | `KEYCODE_BACK` hoặc tap scrim |
+| **Tech** | đa số Compose trong drawer |
 
-#### Sections (vertical list, single scrollable column)
+#### Sections (list dọc, single column scrollable)
 
 | Section header | Items | Notes |
 |---|---|---|
-| (none — header block) | Avatar, EditText nickname, Current Streak, Longest Streak | EditText is `clickable=true` and editable inline |
-| `Friends` | Friends row (`You have 0 friends`) | Out of scope here — likely opens Friends list |
-| `Limited Special Offer` | `Exclusive Deal` row (timer mirrors Today landing) | Same destination as the Today-landing banner (Screen H) |
-| `My Space` | `Explore all features`, `Limit screen time`, `Personalize your conversations`, `Widget selection`, `Daily Bible Verse Wallpaper` (Material switch, OFF default) | Each row navigates to its own settings screen — out of scope for Today |
-| `Personal Details` | `Age range` (`55+`), `Email`, `Denomination` (`Pentecostal`), `Church` | All editable; pre-filled from onboarding quiz |
-| `Subscription` | `Membership` (`Free`), `Upgrade to Premium`, `Restore purchases` | Upgrade likely re-opens paywall |
-| `About` | `Contact us`, `Terms of use`, `Privacy policy` | Standard legal/support links |
+| (không — block header) | Avatar, EditText nickname, Current Streak, Longest Streak | EditText `clickable=true` và editable inline |
+| `Friends` | Row Friends (`You have 0 friends`) | Ngoài scope ở đây — có khả năng mở list Friends |
+| `Limited Special Offer` | Row `Exclusive Deal` (timer mirror Today landing) | Cùng destination với banner trên Today landing (Screen H) |
+| `My Space` | `Explore all features`, `Limit screen time`, `Personalize your conversations`, `Widget selection`, `Daily Bible Verse Wallpaper` (Material switch, OFF mặc định) | Mỗi row navigate sang screen settings riêng — ngoài scope cho Today |
+| `Personal Details` | `Age range` (`55+`), `Email`, `Denomination` (`Pentecostal`), `Church` | Tất cả editable; pre-fill từ onboarding quiz |
+| `Subscription` | `Membership` (`Free`), `Upgrade to Premium`, `Restore purchases` | Upgrade có khả năng re-open paywall |
+| `About` | `Contact us`, `Terms of use`, `Privacy policy` | Link standard legal/support |
 | `Account` | `Link account data` (Google), `Manage your reminders`, `Change language` (`English`) | Reminders → reuse Screen G |
-| Footer | `App version: 4.3.10`, `UID:` (empty for guest) | Static |
+| Footer | `App version: 4.3.10`, `UID:` (rỗng cho guest) | Static |
 
-#### Implementation note
+#### Note implementation
 
-The Profile Drawer is **shared across tabs** (always opened from any header avatar). Implement once as a singleton fragment hosted by `DashboardActivity` and inflate into `DrawerLayout`.
+Profile Drawer **shared qua tab** (luôn mở từ avatar header bất kỳ). Implement
+1 lần như fragment singleton host bởi `DashboardActivity` và inflate vào
+`DrawerLayout`.
 
 ---
 
@@ -328,16 +476,18 @@ The Profile Drawer is **shared across tabs** (always opened from any header avat
 
 | Field | Value |
 |---|---|
-| **Entry** | Tap sparkle icon on Today header (752, 159) |
-| **Container** | Full-screen Compose overlay (no underlying tab visible behind) |
+| **Entry** | Tap sparkle icon trên Today header (752, 159) |
+| **Container** | Compose overlay full-screen (không thấy tab dưới) |
 | **Dismiss** | `KEYCODE_BACK` |
 
 #### Layout
 
 - H1: `Explore`
 - Sub-line: `Discover everything BibleChat has to offer`
-- Filter chips (horizontal, single-select): `Personalize` (selected default) · `Bible Study` · `Community` · `Journey`
-- Body: 2-column grid grouped by section (PERSONALIZE, BIBLE STUDY, COMMUNITY, JOURNEY, LEISURE)
+- Filter chip (ngang, single-select): `Personalize` (selected mặc định) ·
+  `Bible Study` · `Community` · `Journey`
+- Body: grid 2-cột group theo section (PERSONALIZE, BIBLE STUDY, COMMUNITY,
+  JOURNEY, LEISURE)
 
 #### Sections & items
 
@@ -349,9 +499,11 @@ The Profile Drawer is **shared across tabs** (always opened from any header avat
 | `JOURNEY` | Daily Plan, Calendar, The Bible, Screen Time, Meditation |
 | `LEISURE` | Word Guesser, Bible Trivia |
 
-#### Implementation note
+#### Note implementation
 
-This is a **global feature directory** that aliases destinations also reachable via bottom-nav (Chat, Community, Bible, Explore tab) and Profile Drawer. Treat it as a separate cluster and link to the relevant cluster's spec when implementing each item.
+Đây là 1 **directory feature global** alias các destination cũng reach được
+qua bottom-nav (Chat, Community, Bible, Explore tab) và Profile Drawer. Treat
+như 1 cluster tách và link đến spec cluster tương ứng khi implement mỗi item.
 
 ---
 
@@ -361,32 +513,34 @@ This is a **global feature directory** that aliases destinations also reachable 
 
 | Field | Value |
 |---|---|
-| **Entry** | Tap streak/calendar pill on Today header (921, 159) |
-| **Container** | Full-screen overlay |
-| **Dismiss** | `X` close (top-right) or `KEYCODE_BACK` |
+| **Entry** | Tap streak/calendar pill trên Today header (921, 159) |
+| **Container** | Overlay full-screen |
+| **Dismiss** | `X` close (top-right) hoặc `KEYCODE_BACK` |
 | **Tech** | Compose, custom month grid |
 
 #### Layout
 
-- Title: month name + year (e.g. `April 2026`)
+- Title: tên tháng + năm (vd `April 2026`)
 - Close `X`: top-right
 - Day-of-week header row: `MON TUE WED THU FRI SAT SUN`
-- Body: month grid (5–6 rows of 7 cells), each cell `132×118 px` (`@440 dpi`)
-- Multiple months render inline — current month label `April` (yellow), then full grid; below, `May` label + grid (no pagination chevrons)
+- Body: month grid (5–6 row × 7 cell), mỗi cell `132×118 px` (`@440 dpi`)
+- Multi-month render inline — label tháng hiện tại `April` (vàng), rồi grid
+  full; dưới, label `May` + grid (không có chevron pagination)
 
-#### Cell visual states
+#### Visual state cell
 
 | State | Visual |
 |---|---|
-| Default (any day in month) | Outlined circle with day number |
-| Past with completed sessions | Yellow ring (proportional to `dayProgressPercent`) |
-| Today | Filled dark circle, white number (slightly larger or bolder) |
-| Future | Same as default outlined |
-| Past unstarted | Dimmer outline (less opacity) |
+| Mặc định (day bất kỳ trong tháng) | Circle outline kèm số day |
+| Quá khứ có session hoàn thành | Ring vàng (proportional với `dayProgressPercent`) |
+| Today | Circle fill dark, số trắng (hơi to / bold hơn) |
+| Tương lai | Giống mặc định outline |
+| Quá khứ chưa start | Outline mờ hơn (opacity thấp) |
 
-#### Tap rules
+#### Quy tắc tap
 
-Same as Today landing's week-strip rules — past unstarted = silent no-op; days with content navigate to that day's session reader (re-read mode).
+Giống quy tắc week-strip Today landing — quá khứ chưa start = no-op silent;
+day có content navigate sang session reader của day đó (mode re-read).
 
 ---
 
@@ -396,9 +550,9 @@ Same as Today landing's week-strip rules — past unstarted = silent no-op; days
 
 | Field | Value |
 |---|---|
-| **Entry** | Tap subtitle text (441, 284) OR info `i` icon (733, 284) |
-| **Container** | Compose `Popup` overlay (does **not** appear in `uiautomator dump`) |
-| **Dismiss** | `X` button on tooltip OR tap outside |
+| **Entry** | Tap text subtitle (441, 284) HOẶC icon info `i` (733, 284) |
+| **Container** | Overlay Compose `Popup` (**không** xuất hiện trong `uiautomator dump`) |
+| **Dismiss** | Button `X` trên tooltip HOẶC tap ngoài |
 
 #### Content
 
@@ -406,40 +560,45 @@ Same as Today landing's week-strip rules — past unstarted = silent no-op; days
 |---|---|
 | Title | `Tailored just for you!` |
 | Body | `Your Daily Plan is crafted based on your interactions with the app.` |
-| Close | `X` (top-right of tooltip) |
+| Close | `X` (top-right tooltip) |
 
-#### Implementation note
+#### Note implementation
 
-Render as `Popup` anchored above the progress bar. Backdrop dim ~20%. Auto-dismiss on outside tap.
+Render như `Popup` anchor trên progress bar. Backdrop dim ~20%. Auto-dismiss
+khi tap ngoài.
 
-**Testing caveat**: this overlay's text nodes are absent from the uiautomator dump. Espresso/UIAutomator tests must match by **resource ID assigned to the popup container** (if any) or use **TalkBack accessibility nodes**, not text matchers.
+**Caveat testing**: text node của overlay này vắng mặt khỏi dump uiautomator.
+Test Espresso/UIAutomator phải match bằng **resource ID assign cho container
+popup** (nếu có) hoặc dùng **node accessibility TalkBack**, không phải text
+matcher.
 
 ---
 
-### SCREEN F — Day-State Empty Screens
+### SCREEN F — Empty Screen Day-State
 
-#### F.1 — Today locked behind reminder
+#### F.1 — Today lock sau reminder
 
 | Field | Value |
 |---|---|
 | **Entry** | `selectedDate == today AND !todayUnlocked` |
-| **Headline** | `Not quite time yet.\nCheck back <Weekday>, <DD MMMM> for your Daily Plan session` (interpolated with `selectedDate`) |
-| **Sub** | `Your reminder is set for <HH:mm>.\n Would you like to update it?` (interpolated with `User.reminder.time`) |
-| **CTA** | `Change reminder` (yellow text link) → opens Screen G |
-| **Progress bar** | renders `0%` |
+| **Headline** | `Not quite time yet.\nCheck back <Weekday>, <DD MMMM> for your Daily Plan session` (interpolate với `selectedDate`) |
+| **Sub** | `Your reminder is set for <HH:mm>.\n Would you like to update it?` (interpolate với `User.reminder.time`) |
+| **CTA** | `Change reminder` (link text vàng) → mở Screen G |
+| **Progress bar** | render `0%` |
 
-#### F.2 — Future day
+#### F.2 — Day tương lai
 
 | Field | Value |
 |---|---|
 | **Entry** | `selectedDate > today` |
 | **Headline** | `Not quite time yet.\nCheck back tomorrow for your Daily Plan session` |
-| **Sub** | (none) |
-| **CTA** | (none) |
+| **Sub** | (không có) |
+| **CTA** | (không có) |
 
-#### F.3 — Past unstarted (theoretical)
+#### F.3 — Quá khứ chưa start (lý thuyết)
 
-The day is not selectable from the strip/calendar, so this state is unreachable in practice. Nothing to render.
+Day không selectable từ strip/calendar, nên state này unreachable thực tế.
+Không có gì để render.
 
 ---
 
@@ -449,40 +608,44 @@ The day is not selectable from the strip/calendar, so this state is unreachable 
 
 | Field | Value |
 |---|---|
-| **Entry** | Tap `Change reminder` link in F.1 OR tap `Manage your reminders` in Profile Drawer |
+| **Entry** | Tap link `Change reminder` trong F.1 HOẶC tap `Manage your reminders` trong Profile Drawer |
 | **Container** | Material `BottomSheetDialog` (modal) |
-| **Dismiss** | `X` close, swipe down on drag handle, `KEYCODE_BACK`, scrim tap |
+| **Dismiss** | `X` close, swipe down trên drag handle, `KEYCODE_BACK`, tap scrim |
 
 | Element | Text / spec |
 |---|---|
-| Drag-handle hit-zone | `[44,110][1036,242]` |
+| Hit-zone drag-handle | `[44,110][1036,242]` |
 | Close `X` | `[915,110][1047,242]` |
-| Bell illustration | yellow bell, centred top |
+| Bell illustration | bell vàng, centred top |
 | Title | `Connect with God Daily` |
 | Body | `Keep your faith journey on track by updating your reminder for the Daily Plan.` |
-| Time-chip label | `We'll remind you at...` |
-| Time chip | shows current time `HH:mm` (default `09:00`); chevron right; tap → G.2 |
-| Days label | `On these days` |
-| Day toggles | 7 cells `M T W T F S S`; each = `View` containing letter + checkable circle. Default = all 7 enabled. |
-| CTA | `Update reminder` (yellow, full-width) — persists state and dismisses sheet |
+| Label time-chip | `We'll remind you at...` |
+| Time chip | hiện time hiện tại `HH:mm` (mặc định `09:00`); chevron phải; tap → G.2 |
+| Label days | `On these days` |
+| Day toggles | 7 cell `M T W T F S S`; mỗi cái = `View` chứa chữ + circle checkable. Mặc định = cả 7 enable. |
+| CTA | `Update reminder` (vàng, full-width) — persist state và dismiss sheet |
 
 #### G.2 — Material 3 Time Picker
 
-Standard Material 3 `TimePicker` (24h mode). Hour input active by default. Bottom of dialog still shows the day toggles + `Update reminder` CTA — i.e. the picker is **inline** above the bottom sheet, not a separate dialog covering the whole screen.
+`TimePicker` Material 3 chuẩn (mode 24h). Hour input active mặc định. Bottom
+dialog vẫn show day toggles + CTA `Update reminder` — tức picker là **inline**
+trên bottom sheet, không phải dialog tách che toàn screen.
 
-`KEYCODE_BACK` closes the picker (returns to G.1); second back closes G.1.
+`KEYCODE_BACK` đóng picker (về G.1); back lần 2 đóng G.1.
 
 #### Data model
 
 ```kotlin
 data class DailyReminder(
-    val time: LocalTime,        // default 09:00
-    val days: Set<DayOfWeek>,   // default all 7
+    val time: LocalTime,        // mặc định 09:00
+    val days: Set<DayOfWeek>,   // mặc định cả 7
     val enabled: Boolean,       // implicit true; toggle off = ?
 )
 ```
 
-Persistence: `SharedPreferences` for client-side scheduling (`AlarmManager.setExactAndAllowWhileIdle`) + sync to backend `PUT /user/reminder`.
+Persistence: `SharedPreferences` cho client-side scheduling
+(`AlarmManager.setExactAndAllowWhileIdle`) + sync sang backend
+`PUT /user/reminder`.
 
 ---
 
@@ -492,9 +655,9 @@ Persistence: `SharedPreferences` for client-side scheduling (`AlarmManager.setEx
 
 | Field | Value |
 |---|---|
-| **Entry** | Tap `Exclusive Deal` banner (Today landing OR Profile drawer) |
-| **Container** | Full-screen activity/fragment with darkened backdrop and dove illustration in upper-right |
-| **Dismiss** | `X` (top-left) or `KEYCODE_BACK` |
+| **Entry** | Tap banner `Exclusive Deal` (Today landing HOẶC Profile drawer) |
+| **Container** | Activity/fragment full-screen với backdrop tối và illustration chim bồ câu góc phải trên |
+| **Dismiss** | `X` (top-left) hoặc `KEYCODE_BACK` |
 
 #### Components
 
@@ -504,30 +667,34 @@ Persistence: `SharedPreferences` for client-side scheduling (`AlarmManager.setEx
 | Bullet 1 | `Widget with Personalized Daily Verses` |
 | Bullet 2 | `Bring the Bible to your Home Screen` |
 | Bullet 3 | `Personalized Audio Daily Devotionals` |
-| Toggle | label `I want to try the app for free`, Material switch, default ON |
-| Plan A card (selected when toggle ON) | `7 Days Free Trial` · `SAVE 36%` badge · `Then ₫158,549.98 → ₫105,000 per week. No payment now` |
+| Toggle | label `I want to try the app for free`, Material switch, mặc định ON |
+| Plan A card (selected khi toggle ON) | `7 Days Free Trial` · badge `SAVE 36%` · `Then ₫158,549.98 → ₫105,000 per week. No payment now` |
 | Plan B label | `Best Price of the Year` |
 | Plan B card | `12-Month Access` · `Billed yearly at ₫880,000` |
 | Disclaimer | `Cancel anytime before <today + 7 days>.\nNo risks, no charges.` |
-| CTA | `Try for Free →` (yellow pill, full-width) |
+| CTA | `Try for Free →` (pill vàng, full-width) |
 | Footer | `Terms of use` · `Privacy policy` · `Restore` |
 
 #### Behaviour
 
-- Toggle ON → Plan A pre-selected. Toggle OFF → Plan B pre-selected (assumed, not verified).
-- CTA triggers Google Play Billing flow with the SKU corresponding to selected plan.
-- Countdown timer is **global** (single `dealEndsAt` per user); it runs regardless of which screen the user is on.
+- Toggle ON → Plan A pre-selected. Toggle OFF → Plan B pre-selected (giả định,
+  chưa verify).
+- CTA trigger flow Google Play Billing với SKU tương ứng plan đã chọn.
+- Timer countdown là **global** (1 `dealEndsAt` per user); chạy bất kể user ở
+  screen nào.
 
 #### Pricing data
 
-| Plan | Display | SKU pattern (assumed) |
+| Plan | Display | SKU pattern (giả định) |
 |---|---|---|
-| 7-day trial → weekly | `₫105,000/week` (after `₫158,549.98` strikethrough) | `weekly_premium_intro` |
+| 7-day trial → weekly | `₫105,000/week` (sau strikethrough `₫158,549.98`) | `weekly_premium_intro` |
 | 12-month annual | `₫880,000/year` | `yearly_premium` |
 
-#### Known QA bug
+#### Bug QA biết
 
-The strikethrough price renders as `158549.98` (no thousands separators), while the promo line uses `₫105,000` (correctly formatted). Use the same `NumberFormat` for both.
+Giá strikethrough render thành `158549.98` (không có thousand separator),
+trong khi line promo dùng `₫105,000` (format đúng). Dùng cùng `NumberFormat`
+cho cả 2.
 
 ---
 
@@ -537,38 +704,41 @@ The strikethrough price renders as `158549.98` (no thousands separators), while 
 
 | Field | Value |
 |---|---|
-| **Entry** | Tap `Listen` or `Read` on a session card; OR tap a completed day in Calendar/week-strip |
-| **Container** | Full-screen, image background tied to the session theme |
-| **Dismiss** | `X` (top-right) closes outright, returns to Today landing for the same `selectedDate`. Back arrow (top-left) appears when entered via Chat sub-screen |
+| **Entry** | Tap `Listen` hoặc `Read` trên 1 session card; HOẶC tap day đã hoàn thành trong Calendar/week-strip |
+| **Container** | Full-screen, image background bind theme session |
+| **Dismiss** | `X` (top-right) đóng thẳng, về Today landing cùng `selectedDate`. Back arrow (top-left) xuất hiện khi entry qua Chat sub-screen |
 
-#### Common shell
+#### Shell chung
 
 | Region | Element | Spec |
 |---|---|---|
-| Top | Back arrow (left, when applicable) · `Your Journey` title (centre) · `X` close (right) | static |
-| Below top | `Progress for <MMM DD>` + `<N>%` (yellow) | reflects current `dayProgressPercent` |
-| Body header | Card type label small caps + duration (e.g. `YOUR VERSE · 1 MIN`) | static per session type |
-| Body | Long-form text (verse / devotional / prayer); scroll vertical when overflows | server-supplied |
-| Body footer | Citation in yellow (e.g. `Isaiah 41:10`) — present on Verse and Devotional, absent on Prayer | optional |
-| Bottom action bar | left: thumbs-down · middle: `Chat to learn more` · right: `→` arrow (intermediate) OR `Done` pill (last incomplete) | dynamic |
+| Top | Back arrow (trái, khi applicable) · title `Your Journey` (centre) · `X` close (phải) | static |
+| Dưới top | `Progress for <MMM DD>` + `<N>%` (vàng) | reflect `dayProgressPercent` hiện tại |
+| Body header | Label card type small caps + duration (vd `YOUR VERSE · 1 MIN`) | static per session type |
+| Body | Text long-form (verse / devotional / prayer); scroll dọc khi overflow | server cấp |
+| Body footer | Citation màu vàng (vd `Isaiah 41:10`) — có trên Verse và Devotional, vắng trên Prayer | optional |
+| Bottom action bar | trái: thumbs-down · giữa: `Chat to learn more` · phải: arrow `→` (intermediate) HOẶC pill `Done` (last incomplete) | dynamic |
 
 #### Read vs Listen
 
-`Read` — bottom action bar as above (text-only).
-`Listen` — bottom action bar replaced with audio toolbar:
+`Read` — bottom action bar như trên (text-only).
+`Listen` — bottom action bar thay bằng audio toolbar:
 
 | Slot | Element |
 |---|---|
 | Top | linear audio progress bar |
-| Left | current time (`MM:SS`) |
-| Right | track length (`MM:SS`) |
+| Trái | time hiện tại (`MM:SS`) |
+| Phải | track length (`MM:SS`) |
 | Buttons | Share · Previous · Play/Pause · Next · Replay |
 
-Tapping `Listen` auto-plays. Tapping `Read` opens the static text view; user can switch to audio via separate icon (not verified).
+Tap `Listen` auto-play. Tap `Read` mở view text static; user switch sang audio
+được qua icon riêng (chưa verify).
 
 #### "Chat to learn more" → Chat cluster
 
-Navigates to `Chat` (already specced in `chat_feature_spec.md`) with the session text **pre-loaded as a context bubble**. The bubble exposes thumbs-up / thumbs-down / `Copy` / `Share`. Composer is below.
+Navigate sang `Chat` (đã spec trong `chat_feature_spec.md`) với text session
+**pre-load như 1 bubble context**. Bubble expose thumbs-up / thumbs-down /
+`Copy` / `Share`. Composer ở dưới.
 
 #### Data model
 
@@ -576,16 +746,18 @@ Navigates to `Chat` (already specced in `chat_feature_spec.md`) with the session
 data class SessionContent(
     val type: SessionType,          // VERSE | DEVOTIONAL | PRAYER
     val durationMinutes: Int,       // 1 | 3 | 2
-    val title: String,              // e.g. "Strengthened by His Righteous Hand"
-    val tags: List<String>,         // e.g. ["FAITH", "OVERCOMING CHALLENGES"]
+    val title: String,              // vd "Strengthened by His Righteous Hand"
+    val tags: List<String>,         // vd ["FAITH", "OVERCOMING CHALLENGES"]
     val body: String,               // multi-paragraph
-    val citation: String?,          // e.g. "Isaiah 41:10" — null for Prayer
-    val audioUrl: String?,          // null when audio not available
-    val backgroundImageUrl: String, // theme image
+    val citation: String?,          // vd "Isaiah 41:10" — null cho Prayer
+    val audioUrl: String?,          // null khi audio không available
+    val backgroundImageUrl: String, // image theme
 )
 ```
 
-Session-completion is registered when the reader is **opened** (Read or Listen). Track per-session completion server-side; recompute `dayProgressPercent` and broadcast back to Today landing.
+Session-completion register khi reader **mở** (Read hoặc Listen). Track
+per-session completion server-side; recompute `dayProgressPercent` và
+broadcast về Today landing.
 
 ---
 
@@ -595,26 +767,28 @@ Session-completion is registered when the reader is **opened** (Read or Listen).
 
 | Field | Value |
 |---|---|
-| **Entry** | Complete the last incomplete session of the day (typically tapping `Done` on the third reader) |
-| **Container** | Full-screen overlay |
-| **Dismiss** | Tap `Continue` (returns to Today landing for the same day) |
-| **Reuse** | Same screen as onboarding's Block N |
+| **Entry** | Hoàn thành session incomplete cuối day (thường tap `Done` trên reader thứ 3) |
+| **Container** | Overlay full-screen |
+| **Dismiss** | Tap `Continue` (về Today landing cùng day) |
+| **Reuse** | Cùng screen với Block N của onboarding |
 
 #### Layout
 
 | Element | Text / spec |
 |---|---|
-| Fire illustration | yellow gradient flame, centred top |
-| Counter | `<currentStreak>` (large yellow numeral) |
-| Label | `day streak` (yellow) |
-| 3-dot streak progress | dot 1..3 — filled / outline based on `currentStreak / 3` (capped at 3) |
-| Sub | `Stay faithful on your 3-day journey, and a special blessing awaits you: 33 free questions.` (static — but the bonus is delivered upon hitting 3-day streak) |
-| Mini week strip | 7 day cells `Mo Tu We Th Fr Sa Su` with current week numbers; today's cell shows fire icon |
-| CTA | `Continue` (yellow pill) |
+| Fire illustration | flame gradient vàng, centred top |
+| Counter | `<currentStreak>` (numeral vàng cỡ lớn) |
+| Label | `day streak` (vàng) |
+| Streak progress 3-dot | dot 1..3 — fill / outline dựa trên `currentStreak / 3` (cap 3) |
+| Sub | `Stay faithful on your 3-day journey, and a special blessing awaits you: 33 free questions.` (static — nhưng bonus chỉ deliver khi đạt 3-day streak) |
+| Mini week strip | 7 day cell `Mo Tu We Th Fr Sa Su` với số tuần hiện tại; cell today hiện icon fire |
+| CTA | `Continue` (pill vàng) |
 
 #### Bonus delivery
 
-When `currentStreak` reaches `3`, append `33` to `chatQuestionsAvailable` and surface a "+33 free questions unlocked" toast/celebration variant (not observed yet — left for future capture).
+Khi `currentStreak` đạt `3`, append `33` vào `chatQuestionsAvailable` và
+surface 1 toast/celebration variant "+33 free questions unlocked" (chưa quan
+sát — để cho capture sau).
 
 ---
 
@@ -624,23 +798,25 @@ When `currentStreak` reaches `3`, append `33` to `chatQuestionsAvailable` and su
 
 | Field | Value |
 |---|---|
-| **Entry** | Tap `PEACE AND CALM` card |
-| **Container** | Full-screen bottom sheet with darkened backdrop |
-| **Dismiss** | `desc=Close sheet` top hit-zone or `KEYCODE_BACK` |
+| **Entry** | Tap card `PEACE AND CALM` |
+| **Container** | Bottom sheet full-screen với backdrop tối |
+| **Dismiss** | Hit-zone top `desc=Close sheet` hoặc `KEYCODE_BACK` |
 
 #### Layout
 
 | Element | Text |
 |---|---|
-| Top close hit-zone | `[0,0][1080,122]` |
+| Top hit-zone close | `[0,0][1080,122]` |
 | Headline | `Share an anxiety, sin or addiction you're ready to release. A personal moment of grace will follow` |
 | Privacy note | `Your privacy is guaranteed and your information will remain confidential.` |
 | EditText | placeholder `Describe here`, multi-line |
-| `Continue` CTA | greyed/disabled until `EditText` has content |
+| CTA `Continue` | xám/disabled đến khi `EditText` có content |
 
-#### Behaviour (predicted, not verified)
+#### Behaviour (predicted, chưa verify)
 
-Submitting `Continue` likely opens a "Moment of Grace" screen with an AI-generated prayer/affirmation tailored to the user's input. The card itself does **not** count toward the 100% day-progress (the 3 sessions Verse + Devotional + Prayer suffice).
+Submit `Continue` có khả năng mở 1 screen "Moment of Grace" với
+prayer/affirmation AI generate tailor input user. Card này **không** count
+toward day-progress 100% (3 session Verse + Devotional + Prayer là đủ).
 
 ---
 
@@ -650,13 +826,13 @@ Submitting `Continue` likely opens a "Moment of Grace" screen with an AI-generat
 
 | Field | Value |
 |---|---|
-| **Entry** | Tap Light Points badge on Today header (950, 284) |
+| **Entry** | Tap Light Points badge trên Today header (950, 284) |
 | **Container** | Full-screen, scrollable |
-| **Dismiss** | `X` (top-left) or `KEYCODE_BACK` |
+| **Dismiss** | `X` (top-left) hoặc `KEYCODE_BACK` |
 
 #### Header
 
-`Available Points : ⊙ <lightPointsBalance>` (yellow circle glyph + number)
+`Available Points : ⊙ <lightPointsBalance>` (glyph circle vàng + số)
 
 #### Sections
 
@@ -665,65 +841,76 @@ Submitting `Continue` likely opens a "Moment of Grace" screen with an AI-generat
 | `Premium` | `1-Month Premium` · `⊙ 5000` |
 | `App Unlocks` | `Live Wallpaper` · `⊙ 500` |
 | `Chat Unlocks` | `5 Questions` · `⊙ 250` ; `25 Questions` · `⊙ 1000` ; `100 Questions` · `⊙ 2500` |
-| `Light Points` (purchase tiers, paid in VND) | `100 LP` · `₫30,000` · `500 LP` · `₫108,000` · `1.000 LP` · `₫198,000` · `2.500 LP` · `₫391,000` · `10.000 LP` · `₫1,300,000` |
-| `Study Unlocks` | 20 study packs, each `⊙ 250` (full list in `today_observations.md` §15) |
-| `Coming Soon` | `Special Study` (placeholder, not purchasable) |
+| `Light Points` (tier purchase, paid bằng VND) | `100 LP` · `₫30,000` · `500 LP` · `₫108,000` · `1.000 LP` · `₫198,000` · `2.500 LP` · `₫391,000` · `10.000 LP` · `₫1,300,000` |
+| `Study Unlocks` | 20 study pack, mỗi cái `⊙ 250` (full list trong `today_observations.md` §15) |
+| `Coming Soon` | `Special Study` (placeholder, không purchase được) |
 
 #### Currency model
 
 ```kotlin
 data class Wallet(
-    val lightPoints: Int,       // earned + purchased
-    val chatQuestionsLeft: Int, // separate counter, surfaced as ?N badge in Chat header
+    val lightPoints: Int,       // earn + purchase
+    val chatQuestionsLeft: Int, // counter tách, surface là badge ?N trong Chat header
 )
 
 enum class LpEarnSource { SESSION_COMPLETE, DAY_STREAK, PURCHASE, PROMOTIONAL }
 ```
 
-#### Known QA bug
+#### Bug QA biết
 
-Light Points purchase tiers use dot-as-thousands-separator (`1.000`, `2.500`, `10.000`) while VND prices use comma (`30,000`, `1,300,000`). Same screen — pick one.
+Tier purchase Light Points dùng dot-as-thousand-separator (`1.000`, `2.500`,
+`10.000`) trong khi giá VND dùng dấu phẩy (`30,000`, `1,300,000`). Cùng screen
+— pick one.
 
 ---
 
 ## 4. Cross-screen invariants
 
-### 4.1 Session reader chrome
+### 4.1 Chrome session reader
 
-All three readers (Verse / Devotional / Prayer) share the exact same shell — implement once, parameterise on `SessionContent`.
+Cả 3 reader (Verse / Devotional / Prayer) chia chung cùng shell chính xác —
+implement 1 lần, parameterise theo `SessionContent`.
 
-### 4.2 Single-expansion invariant
+### 4.2 Invariant single-expansion
 
-Only one session card on the Today landing can be expanded at a time. Tapping a collapsed card auto-collapses any expanded sibling.
+Chỉ 1 session card trên Today landing được expand mỗi lúc. Tap card collapsed
+sẽ auto-collapse sibling đang expand.
 
-### 4.3 Progress denominator
+### 4.3 Denominator progress
 
-`dayProgressPercent` is computed over **3 sessions** (Verse + Devotional + Prayer). Peace and Calm is **not** counted. Expected jumps: `0% → 33% → 67% → 100%` (observed: `75% → 100%` after the Prayer in this session — so the displayed percent is **rounded** with `Verse + Devotional` already counting as `2/3 = 66.67% → rounded to 75%`, suggesting custom rounding or a different weighting; verify with engineer).
+`dayProgressPercent` compute trên **3 session** (Verse + Devotional + Prayer).
+Peace and Calm **không** count. Nhảy expected: `0% → 33% → 67% → 100%` (quan
+sát: `75% → 100%` sau Prayer trong session này — tức percent display **rounded**
+với `Verse + Devotional` đã count là `2/3 = 66.67% → round thành 75%`, suggest
+custom rounding hoặc weighting khác; verify với engineer).
 
 ### 4.4 Sticky header
 
-Header from y=93 to y=778 is sticky. Cards scroll inside `[0, ~770][1080, 1808]`.
+Header từ y=93 đến y=778 sticky. Cards scroll trong `[0, ~770][1080, 1808]`.
 
 ### 4.5 Light Points vs Chat Questions
 
-These are **two separate counters**:
-- **Light Points** (`⊙` badge in Today header) → spent on premium, wallpaper, Q-credits, studies.
-- **Chat Questions** (`?N` badge in Chat header) → consumed per AI question; replenished via Light Points purchases, streak rewards, premium subscription.
+Đây là **2 counter tách biệt**:
+- **Light Points** (badge `⊙` trong Today header) → spent vào premium,
+  wallpaper, Q-credit, study.
+- **Chat Questions** (badge `?N` trong Chat header) → consume per AI question;
+  replenish qua purchase Light Points, reward streak, premium subscription.
 
-### 4.6 Bottom-nav visibility
+### 4.6 Visibility bottom-nav
 
-Bottom nav stays visible on:
-- Today landing (all variants)
-- Profile drawer? — **No**, drawer overlays nav
-- Calendar, Paywall, Available Points, Session Reader, Day-Complete — **No**, these are full-screen overlays
+Bottom nav giữ visible trên:
+- Today landing (mọi variant)
+- Profile drawer? — **Không**, drawer overlay nav
+- Calendar, Paywall, Available Points, Session Reader, Day-Complete —
+  **Không**, các cái này là overlay full-screen
 
-### 4.7 Date-state machine
+### 4.7 State machine date
 
 ```
-[ today date rolls over at midnight ] ─▶ [ selectedDate auto-set to new today ]
-[ user taps past day with content   ] ─▶ [ render reader for that day, do NOT change selectedDate ]
-[ user taps day in week strip       ] ─▶ [ if has content/today/future: switch selectedDate ]
-                                          [ if past unstarted: no-op ]
+[ today date roll over lúc midnight ] ─▶ [ selectedDate auto-set sang today mới ]
+[ user tap day quá khứ có content    ] ─▶ [ render reader cho day đó, KHÔNG đổi selectedDate ]
+[ user tap day trong week strip      ] ─▶ [ nếu has content/today/future: switch selectedDate ]
+                                          [ nếu past unstarted: no-op ]
 ```
 
 ---
@@ -799,13 +986,13 @@ Bottom nav stays visible on:
 }
 // Response 200
 {
-  "card": { ... },                  // updated card
+  "card": { ... },                  // card đã update
   "dayProgressPercent": 100,
   "streakUpdated": true,
   "currentStreak": 1,
   "lightPointsAwarded": 70,
   "lightPointsBalance": 100,
-  "milestoneUnlocked": null         // or "STREAK_3" -> +33 chat questions
+  "milestoneUnlocked": null         // hoặc "STREAK_3" -> +33 chat questions
 }
 ```
 
@@ -873,7 +1060,7 @@ Bottom nav stays visible on:
   "studyUnlocks": [
     { "id": "study_loved_then_loving",  "label": "Loved, then loving",        "costPoints": 250 },
     { "id": "study_heart_thanksgiving", "label": "The Heart of Thanksgiving", "costPoints": 250 }
-    // ... 18 more (full list in today_observations.md)
+    // ... 18 cái khác (full list trong today_observations.md)
   ],
   "comingSoon": [ { "id": "study_special", "label": "Special Study" } ]
 }
@@ -888,15 +1075,15 @@ data class TodayState(
     val selectedDate: LocalDate,
     val systemToday: LocalDate,
     val nickname: String,
-    val avatarLetter: Char,                    // first char of nickname
-    val title: String,                         // "Today's Journey" or "MMM DD's Journey"
-    val theme: String,                         // dynamic per-day subtitle
+    val avatarLetter: Char,                    // ký tự đầu nickname
+    val title: String,                         // "Today's Journey" hoặc "MMM DD's Journey"
+    val theme: String,                         // subtitle dynamic per-day
     val streak: Int,
     val lightPoints: Int,
-    val weekDays: List<DayCellState>,          // 7 cells of current week
+    val weekDays: List<DayCellState>,          // 7 cell tuần hiện tại
     val progressPercent: Int,
     val cards: List<CardState>,
-    val emptyState: EmptyState?,               // non-null when day is gated
+    val emptyState: EmptyState?,               // non-null khi day bị gate
     val exclusiveDeal: ExclusiveDealState?,
 )
 
@@ -909,7 +1096,7 @@ sealed class CardState {
         val tags: List<String>,
         val backgroundImageUrl: String,
         val completed: Boolean,
-        val expanded: Boolean,                 // single-expansion invariant
+        val expanded: Boolean,                 // invariant single-expansion
     ) : CardState()
     data class PeaceAndCalm(
         val title: String,                     // "PEACE AND CALM"
@@ -943,50 +1130,80 @@ data class ExclusiveDealState(
 
 ---
 
-## 7. Open questions / left for engineer to verify
+## 7. Open questions / để engineer verify
 
-1. **Reminder gating logic** — does the Today plan unlock when the wall clock passes the reminder time, or only after the reminder notification is *acknowledged* (tapped)? Capture timestamp `12:19` was past the `09:00` reminder yet today was still locked.
-2. **Listen completion** — does opening `Listen` count as "completed", or only after audio plays through?
-3. **Peace and Calm submit flow** — what happens after `Continue` is enabled and tapped? Likely an AI grace-moment screen — capture next session.
-4. **Streak bonus** — `33 free questions` promised at 3-day streak. Capture the actual bonus delivery UI.
-5. **Light Points award rate** — exactly how many points per session-complete / per Day-Complete? Worth measuring across 5 days.
-6. **Calendar past-month navigation** — only April + May rendered; how does the user reach March or earlier? Possibly infinite-scroll up — not tested.
-7. **Profile Drawer rows** — most rows not deep-tested; `Limit screen time`, `Personalize your conversations`, `Widget selection`, `Daily Bible Verse Wallpaper` toggle behaviour all need their own micro-specs.
-8. **Pricing** — confirm Plan A pre-strikethrough price source (`158549.98` looks like raw `priceMicros / 1e6` without rounding/formatting).
+1. **Logic gating reminder** — plan Today unlock khi wall clock vượt time
+   reminder, hay chỉ sau khi notification reminder được *acknowledge* (tap)?
+   Capture timestamp `12:19` qua reminder `09:00` mà today vẫn lock.
+2. **Listen completion** — mở `Listen` count là "completed", hay chỉ sau khi
+   audio play through?
+3. **Flow submit Peace and Calm** — gì xảy ra sau khi `Continue` enable và
+   tap? Có khả năng 1 screen AI grace-moment — capture session sau.
+4. **Bonus streak** — `33 free questions` promise ở 3-day streak. Capture UI
+   delivery bonus thật.
+5. **Rate award Light Points** — chính xác bao nhiêu point per session-complete
+   / per Day-Complete? Đáng đo qua 5 day.
+6. **Navigation past-month Calendar** — chỉ April + May render; user reach
+   March hoặc trước đó thế nào? Có khả năng infinite-scroll up — chưa test.
+7. **Row Profile Drawer** — đa số row chưa deep-test; behaviour `Limit screen
+   time`, `Personalize your conversations`, `Widget selection`, toggle `Daily
+   Bible Verse Wallpaper` đều cần micro-spec riêng.
+8. **Pricing** — confirm source giá Plan A pre-strikethrough (`158549.98`
+   trông như raw `priceMicros / 1e6` không round/format).
 
 ---
 
 ## 8. Acceptance criteria
 
-A Today implementation is considered **done** when the following can be verified end-to-end:
+1 implementation Today coi là **done** khi các điểm sau verify được end-to-end:
 
-- [ ] Cold launch lands on Today tab; bottom nav `Today` shown with `large_label` style.
-- [ ] Header sticky behaviour: scrolling cards does not move the header.
-- [ ] Week strip renders the 7 days of the current week; today highlighted; past day with content shows ring.
-- [ ] Tapping a past day with content opens that day's reader (re-read mode); past unstarted day is no-op.
-- [ ] Calendar opens via streak pill; 2 months render inline; tap rules same as week strip.
-- [ ] Subtitle and `i` icon both open the same tooltip; tooltip dismissable via `X` and outside tap.
-- [ ] Light Points badge displays current balance (multi-digit handled); tap opens Available Points page.
-- [ ] Each session card supports collapsed/expanded states; only one expanded at a time; collapsed shows `DONE` chip when complete.
-- [ ] Reading or listening to a session marks it complete and updates `dayProgressPercent` immediately.
-- [ ] Completing the last session triggers Day-Complete; `Continue` returns to Today landing with all cards `DONE` and streak +1.
-- [ ] When today is locked behind reminder, F.1 empty state renders with correct `<Weekday>, <DD MMMM>` interpolation and live `<HH:mm>`.
-- [ ] `Change reminder` opens bottom sheet; time chip opens Material 3 TimePicker; `Update reminder` persists and dismisses.
-- [ ] Exclusive Deal banner countdown ticks down in real time; tap opens paywall; CTA `Try for Free` triggers Play Billing.
-- [ ] Profile Drawer slides in from left; pre-fills nickname, age range, denomination from server `User` payload.
-- [ ] Tooltip overlay does not block interaction with the rest of the screen (verify `Popup` `properties.focusable` setting).
-- [ ] All currency rendered in `₫` with consistent thousands separator (one of `,` or `.` — choose and stick).
-- [ ] Bottom nav stays visible on Today landing (all variants); hides on full-screen overlays (Calendar, Paywall, Available Points, Session Reader, Day-Complete) and on drawer.
+- [ ] Cold launch land trên tab Today; bottom nav `Today` show với style
+  `large_label`.
+- [ ] Behaviour sticky header: scroll cards không di chuyển header.
+- [ ] Week strip render 7 day của tuần hiện tại; today highlight; day quá khứ
+  có content show ring.
+- [ ] Tap day quá khứ có content mở reader của day đó (mode re-read); day
+  quá khứ chưa start là no-op.
+- [ ] Calendar mở qua streak pill; 2 tháng render inline; quy tắc tap giống
+  week strip.
+- [ ] Subtitle và icon `i` cùng mở 1 tooltip; tooltip dismiss được qua `X` và
+  tap ngoài.
+- [ ] Light Points badge display balance hiện tại (handle multi-digit); tap
+  mở page Available Points.
+- [ ] Mỗi session card support state collapsed/expanded; chỉ 1 expand mỗi
+  lúc; collapsed show chip `DONE` khi complete.
+- [ ] Read hoặc listen 1 session mark complete và update `dayProgressPercent`
+  ngay.
+- [ ] Hoàn thành session cuối trigger Day-Complete; `Continue` về Today
+  landing với mọi card `DONE` và streak +1.
+- [ ] Khi today lock sau reminder, empty state F.1 render với interpolation
+  đúng `<Weekday>, <DD MMMM>` và live `<HH:mm>`.
+- [ ] `Change reminder` mở bottom sheet; time chip mở Material 3 TimePicker;
+  `Update reminder` persist và dismiss.
+- [ ] Countdown banner Exclusive Deal tick xuống real-time; tap mở paywall;
+  CTA `Try for Free` trigger Play Billing.
+- [ ] Profile Drawer slide từ trái; pre-fill nickname, age range, denomination
+  từ payload server `User`.
+- [ ] Tooltip overlay không block tương tác phần còn lại của screen (verify
+  setting `Popup` `properties.focusable`).
+- [ ] Mọi currency render bằng `₫` với thousand separator nhất quán (1 trong
+  `,` hoặc `.` — pick và stick).
+- [ ] Bottom nav giữ visible trên Today landing (mọi variant); ẩn trên
+  overlay full-screen (Calendar, Paywall, Available Points, Session Reader,
+  Day-Complete) và trên drawer.
 
 ---
 
 ## 9. References
 
-- **Raw observations** (per-screen bounds & literals): `today_observations.md`
-- **Flow spec** (block-by-block transitions, state machines, QA bugs): `today_spec.md`
-- **Cross-cluster specs**:
-  - Onboarding (initial reminder setup, Day-Complete reuse): `onboarding_feature_spec.md`
-  - Chat (entry from "Chat to learn more"): `chat_feature_spec.md`
-  - Community / Bible / Explore (siblings in bottom nav): `community_feature_spec.md`, (Bible/Explore not yet specced)
-- **Screenshots**: `spec/screens/today/screen_*.png`
-- **UI dumps**: `spec/ui_dumps/today/screen_*.xml`
+- **Raw observations** (bounds & literal per-screen): `today_observations.md`
+- **Flow spec** (transition block-by-block, state machine, bug QA):
+  `today_spec.md`
+- **Cross-cluster spec**:
+  - Onboarding (setup reminder ban đầu, reuse Day-Complete):
+    `onboarding_feature_spec.md`
+  - Chat (entry từ "Chat to learn more"): `chat_feature_spec.md`
+  - Community / Bible / Explore (sibling trong bottom nav):
+    `community_feature_spec.md`, (Bible/Explore chưa spec)
+- **Screenshot**: `spec/screens/today/screen_*.png`
+- **UI dump**: `spec/ui_dumps/today/screen_*.xml`

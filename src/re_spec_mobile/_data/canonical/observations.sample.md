@@ -112,52 +112,50 @@ related:
 
 # BibleChat — Today Tab Screen-by-Screen Observations
 
-> **⚠️ CANONICAL — REFERENCE STRUCTURE, KHÔNG PHẢI TEMPLATE NGÔN NGỮ.**
-> File này gốc từ project BibleChat (gen trước khi enforce policy "output
-> tiếng Việt"). Mọi spec MỚI phải viết bằng tiếng Việt với technical term
-> tiếng Anh — xem `docs/I18N_GLOSSARY.md`.
+> **⚠️ CANONICAL — REFERENCE STRUCTURE.**
+> Mọi spec MỚI viết bằng tiếng Việt với technical term tiếng Anh — xem
+> `docs/I18N_GLOSSARY.md`. UI string trong backtick giữ NGUYÊN VĂN của app.
 >
-> Khi reference file này, agent `spec-writer` PHẢI mimic:
-> - Cấu trúc section + thứ tự ("Layout" → bảng visible element → bảng
->   transition → "Hành vi quan sát" → "Note")
-> - Density bảng bounds (5 cột)
-> - Anchor marker `{#feature/screen/name}` sau heading
-> - UI string trong backtick nguyên văn
->
-> KHÔNG mimic:
-> - Prose paragraphs bằng tiếng Anh (viết tiếng Việt)
-> - Section heading "### Observed behaviour" → ghi `### Hành vi quan sát`
-> - Section heading "### Notes" → ghi `### Note`
+> Cấu trúc cần mimic: heading screen + bảng visible elements (5 cột) + bảng
+> Transitions + section "Hành vi quan sát" + section "Note" + cuối file là
+> "Cross-screen invariants".
 
 **Target package**: `com.basmo.BibleChat`
 **App version**: `4.3.10`
-**Device**: 8A5X0M2H8 (Pixel, Android — `vi-VN` locale)
-**Method**: `adb shell uiautomator dump` + `screencap`, captured on 2026-04-16 ≈ 12:01–12:36 GMT+7.
-**Rule**: every line below transcribed from a UI dump or its screenshot — nothing inferred.
-**State at capture**: guest user "Faithfulness Traveler 3576", onboarding completed, day 15 (Apr 15) sessions in progress (75% → 100% during the session), today (Apr 16) plan still locked behind 09:00 reminder.
+**Device**: 8A5X0M2H8 (Pixel, Android — locale `vi-VN`)
+**Method**: `adb shell uiautomator dump` + `screencap`, capture ngày 2026-04-16
+khoảng 12:01–12:36 GMT+7.
+**Quy tắc**: mọi dòng dưới đây transcribe từ 1 UI dump hoặc screenshot tương
+ứng — không infer.
+**State lúc capture**: guest user "Faithfulness Traveler 3576", onboarding xong,
+session ngày 15 (Apr 15) đang in-progress (75% → 100% trong session), plan hôm
+nay (Apr 16) còn lock sau reminder 09:00.
 
 ---
 
 ## Screen 01 — Today Landing (Active Day = Apr 15, 75% → 100%)
 
-- **Dump**: `spec/ui_dumps/today/screen_01_a.xml` (top), `screen_01_b.xml` (after one swipe)
+- **Dump**: `spec/ui_dumps/today/screen_01_a.xml` (top), `screen_01_b.xml` (sau 1 swipe)
 - **Screenshot**: `spec/screens/today/screen_01_a.png`, `screen_01_b.png`
 - **Activity**: `com.basmo.BibleChat/com.bookvitals.bibleChat.main.DashboardActivity`
 
 ### Layout
 
-The screen has a **sticky header block** (header + week strip + progress bar) and a **scrollable cards area** below. Bounds compared across `_a` and `_b` confirm the header (`Today's Journey`, week strip, `Progress today / 75%`) holds the same coordinates after scrolling — so it is sticky.
+Screen có 1 **block header sticky** (header + week strip + progress bar) và 1
+**vùng card scrollable** ở dưới. So bounds qua `_a` và `_b` confirm header
+(`Today's Journey`, week strip, `Progress today / 75%`) giữ nguyên toạ độ sau
+scroll — vậy là sticky.
 
 Viewport segments:
 
 | Segment | Visible scrollable content |
 |---|---|
 | `_a` (top) | Exclusive Deal banner · YOUR VERSE (expanded) · PERSONALIZED DEVOTIONAL header (truncated bottom) |
-| `_b` (after one swipe up of ~1000 px) | PERSONALIZED DEVOTIONAL (collapsed) · PRAYER OF THE DAY (collapsed) · PEACE AND CALM |
+| `_b` (sau 1 swipe up ~1000 px) | PERSONALIZED DEVOTIONAL (collapsed) · PRAYER OF THE DAY (collapsed) · PEACE AND CALM |
 
-Further scroll attempts produced no new content → page bottom reached.
+Thêm scroll không sinh content mới → đã đến cuối page.
 
-### Sticky header — visible elements (from `_a`)
+### Sticky header — visible elements (từ `_a`)
 
 | Element | Class | Bounds | Clickable | Text / desc |
 |---|---|---|---|---|
@@ -182,8 +180,8 @@ Further scroll attempts produced no new content → page bottom reached.
 
 | Card | Bounds | Clickable container | Visible literals |
 |---|---|---|---|
-| Exclusive Deal banner | `[0,807][1080,1004]` | **yes** | `Exclusive Deal` · timer `23:58:20` (countdown, decreased to `23:36:01` over the session) |
-| YOUR VERSE (expanded) | `[44,1021][1036,1681]` | **yes** | `YOUR VERSE` · `1 MIN` · `DONE` · `Isaiah 41:10` · tags `STRENGTH`, `COURAGE`, `SUPPORT` · `Listen` button `[88,1483][518,1637]` · `Read` button `[562,1483][992,1637]` |
+| Exclusive Deal banner | `[0,807][1080,1004]` | **yes** | `Exclusive Deal` · timer `23:58:20` (countdown, giảm về `23:36:01` cuối session) |
+| YOUR VERSE (expanded) | `[44,1021][1036,1681]` | **yes** | `YOUR VERSE` · `1 MIN` · `DONE` · `Isaiah 41:10` · tag `STRENGTH`, `COURAGE`, `SUPPORT` · `Listen` button `[88,1483][518,1637]` · `Read` button `[562,1483][992,1637]` |
 | PERSONALIZED DEVOTIONAL (collapsed) | `[44,1715][1036,1847]` | **yes** | `PERSONALIZED DEVOTIONAL` · `3 MIN` · `DONE` |
 
 ### Scrollable cards — viewport `_b`
@@ -194,7 +192,7 @@ Further scroll attempts produced no new content → page bottom reached.
 | PRAYER OF THE DAY (collapsed, chevron-down) | `[44,937][1036,1186]` | **yes** | `PRAYER OF THE DAY` · `2 MIN` (no `DONE`) |
 | PEACE AND CALM (oneshot) | `[44,1217][1036,1454]` | **yes** | `PEACE AND CALM` · `When life's too loud, listen within` |
 
-### Bottom navigation (constant across all main-app screens)
+### Bottom navigation (constant qua mọi main-app screen)
 
 | Tab | Container | Bounds | resource-id | desc | State |
 |---|---|---|---|---|---|
@@ -204,38 +202,44 @@ Further scroll attempts produced no new content → page bottom reached.
 | Bible | FrameLayout | `[648,1808][864,2028]` | `bible_screen_navbar` | `Bible` | inactive |
 | Explore | FrameLayout | `[864,1808][1080,2028]` | `navigation_new_study` | `Explore` | inactive |
 
-### Observed behaviour
+### Hành vi quan sát
 
-- Header sticky — bounds for avatar / title / week strip / progress bar are identical between `_a` and `_b`. Scroll affects only the cards area `[0, ~770][1080, 1808]`.
-- Week strip shows current week (Mon 13 – Sun 19), **not horizontally scrollable** (a horizontal swipe `(800,460)→(200,460)` produced no change in the dump).
-- The card with `chevron-down` (Prayer of the Day) is a per-card expand/collapse; tapping any card collapses sibling cards (only one expanded at a time — observed Verse↔Devotional↔Prayer toggling).
-- After the Prayer Read flow completed, the progress jumped from `75%` to `100%` and the streak counter `0` became `1`.
-- The Light Points badge text is constructed from two separate `TextView` nodes (e.g. `3` + `0` for "30", or `1` + `0` + `0` for "100").
+- Header sticky — bounds avatar / title / week strip / progress bar identical
+  giữa `_a` và `_b`. Scroll chỉ ảnh hưởng vùng card `[0, ~770][1080, 1808]`.
+- Week strip hiện tuần hiện tại (Mon 13 – Sun 19), **không scroll ngang được**
+  (1 swipe ngang `(800,460)→(200,460)` không đổi gì trong dump).
+- Card có `chevron-down` (Prayer of the Day) là expand/collapse per-card; tap
+  card nào sẽ collapse các sibling card (chỉ 1 expanded mỗi lúc — đã quan sát
+  toggle Verse↔Devotional↔Prayer).
+- Sau khi flow Prayer Read xong, progress nhảy từ `75%` lên `100%` và streak
+  counter `0` thành `1`.
+- Text Light Points badge dựng từ 2 `TextView` node tách (vd. `3` + `0` cho
+  "30", hoặc `1` + `0` + `0` cho "100").
 
-### Transitions (from this screen)
+### Transitions (từ screen này)
 
 | Tap target | Centre | Result |
 |---|---|---|
-| Avatar `F` | (118, 213) | Profile drawer slides from left (screen 02) |
+| Avatar `F` | (118, 213) | Profile drawer slide từ trái (screen 02) |
 | Sparkle icon | (752, 159) | "Explore" overlay (screen 03) |
 | Streak/calendar pill (`0`/`1`) | (921, 159) | Calendar full-month grid (screen 04) |
-| Subtitle `Starting Your Journey` | (441, 284) | "Tailored just for you!" tooltip overlay (screen 05) |
-| Info `i` icon | (733, 284) | Same tooltip (screen 14_info) |
-| Light Points badge `30` / `100` | (950, 284) | Available Points page (screen 15) |
-| Week-strip day **with content** (`15`) | (403, 469) | View persists on that day; title becomes `Apr 15's Journey` |
-| Week-strip day **today** (`16`) | (540, 469) | View resets to today; cards replaced by "Not quite time yet" empty state (screen 06_today) |
-| Week-strip day **future** (`17`) | (677, 469) | Title `Apr 17's Journey`, subtitle `Exploring Scripture`, "Check back tomorrow" empty state (screen 06_future) |
-| Week-strip day **past, never started** (`13`, `14`) | (130, 469) / (266, 469) | No navigation (silent no-op) |
+| Subtitle `Starting Your Journey` | (441, 284) | Tooltip overlay "Tailored just for you!" (screen 05) |
+| Info `i` icon | (733, 284) | Cùng tooltip (screen 14_info) |
+| Light Points badge `30` / `100` | (950, 284) | Trang Available Points (screen 15) |
+| Week-strip day **có content** (`15`) | (403, 469) | View persist ở day đó; title đổi thành `Apr 15's Journey` |
+| Week-strip day **today** (`16`) | (540, 469) | View reset về today; card thay bằng empty state "Not quite time yet" (screen 06_today) |
+| Week-strip day **tương lai** (`17`) | (677, 469) | Title `Apr 17's Journey`, subtitle `Exploring Scripture`, empty state "Check back tomorrow" (screen 06_future) |
+| Week-strip day **quá khứ chưa start** (`13`, `14`) | (130, 469) / (266, 469) | Không navigate (no-op silent) |
 | Exclusive Deal banner | (540, 905) | Paywall (screen 08) |
-| YOUR VERSE card body | (540, 1100) | Card expand toggle (no navigation) |
-| `Listen` button on Verse | (305, 1560) | Verse Reader with audio playback (screen 09_listen) |
-| `Read` button on Verse | (777, 1560) | Verse Reader text view (screen 09_read) |
-| PERSONALIZED DEVOTIONAL card body | (540, 1015) after _b scroll | Card expand toggle |
-| `Read` on Devotional | (815, 1377) | Devotional Reader (screen 10_read) |
-| PRAYER OF THE DAY card body | (540, 1100) after _b scroll | Card expand toggle |
-| `Read` on Prayer | (815, 1497) | Prayer Reader (screen 11_read) — finishing it triggers Day Complete (screen 12) |
-| PEACE AND CALM card | (540, 1430) | "Share an anxiety…" bottom sheet (screen 13) |
-| Bottom-nav tab (Chat / Community / Bible / Explore) | per table | Navigates to that tab |
+| Body card YOUR VERSE | (540, 1100) | Toggle expand card (không navigate) |
+| Button `Listen` trên Verse | (305, 1560) | Verse Reader có audio playback (screen 09_listen) |
+| Button `Read` trên Verse | (777, 1560) | Verse Reader text view (screen 09_read) |
+| Body card PERSONALIZED DEVOTIONAL | (540, 1015) sau scroll _b | Toggle expand card |
+| `Read` trên Devotional | (815, 1377) | Devotional Reader (screen 10_read) |
+| Body card PRAYER OF THE DAY | (540, 1100) sau scroll _b | Toggle expand card |
+| `Read` trên Prayer | (815, 1497) | Prayer Reader (screen 11_read) — kết thúc trigger Day Complete (screen 12) |
+| Card PEACE AND CALM | (540, 1430) | Bottom sheet "Share an anxiety…" (screen 13) |
+| Bottom-nav tab (Chat / Community / Bible / Explore) | xem bảng | Navigate sang tab đó |
 
 ---
 
@@ -243,16 +247,17 @@ Further scroll attempts produced no new content → page bottom reached.
 
 - **Dump**: `screen_02_avatar.xml` (top), `_b.xml`, `_c.xml`, `_d.xml`, `_e.xml`
 - **Screenshot**: `screen_02_avatar.png`, `_b.png`, `_c.png`, `_d.png`, `_e.png`
-- **Entry**: tap avatar `F` on Today header
-- **Dismiss**: `KEYCODE_BACK` (verified) or tap right edge `[990,0][1080,2028]` (`desc=Close navigation menu`)
+- **Entry**: tap avatar `F` trên header Today
+- **Dismiss**: `KEYCODE_BACK` (verified) hoặc tap mép phải `[990,0][1080,2028]` (`desc=Close navigation menu`)
 
 ### Layout
 
-A drawer covering the left ~92% of the screen (right `[990,1080]` is the dimmed close zone). Entire content vertically scrollable. Bottom nav is **not** visible while drawer is open.
+Drawer phủ ~92% trái screen (phải `[990,1080]` là vùng dim để close). Toàn bộ
+content scroll dọc. Bottom nav **không** visible khi drawer mở.
 
-### Sections (top to bottom, observed across `_a`–`_e`)
+### Sections (top xuống bottom, quan sát qua `_a`–`_e`)
 
-| Section | Item | Bounds (top capture) | Clickable | Text / value |
+| Section | Item | Bounds (capture top) | Clickable | Text / value |
 |---|---|---|---|---|
 | **Header** | Avatar (placeholder person glyph) | `[289,143][702,556]` | **yes** | (no text/desc) |
 | | Name (editable) | `[125,625][866,757]` | **yes** (EditText) | `Faithfulness Traveler 3576` |
@@ -260,36 +265,40 @@ A drawer covering the left ~92% of the screen (right `[990,1080]` is the dimmed 
 | | Longest Streak | `[561,825][880,984]` | no | `0` + label `Longest Streak` |
 | **Friends** | Friends row | `[44,1072][946,1300]` | **yes** | icon · `Friends` · `You have 0 friends` · chevron-right |
 | **Limited Special Offer** | Section header | `[88,1366][902,1449]` | no | `Limited Special Offer` |
-| | Exclusive Deal banner | `[44,1493][946,1656]` | **yes** | `Exclusive Deal` · `23:50:51` (same countdown as Today landing) |
+| | Exclusive Deal banner | `[44,1493][946,1656]` | **yes** | `Exclusive Deal` · `23:50:51` (cùng countdown với Today landing) |
 | **My Space** | Section header | `[88,1722][902,1805]` | no | `My Space` |
 | | Explore all features | `[44,1849][946,2012]` | **yes** | `Explore all features` |
-| | Limit screen time | (in `_b`) | **yes** | clock-restrict icon · `Limit screen time` |
-| | Personalize your conversations | (in `_b`) | **yes** | sliders icon · `Personalize your conversations` |
-| | Widget selection | (in `_b`) | **yes** | grid icon · `Widget selection` |
-| | Daily Bible Verse Wallpaper | (in `_b`) | row + toggle (off, yellow) | `Daily Bible Verse Wallpaper` |
-| **Personal Details** | Age range | (in `_c`) | **yes** | `Age range` · value `55+` |
-| | Email | (in `_c`) | **yes** | `Email` · placeholder `Write here…` |
-| | Denomination | (in `_c`) | **yes** | `Denomination` · value `Pentecostal` |
-| | Church | (in `_c`) | **yes** | `Church` · placeholder `Write here…` |
-| **Subscription** | Membership | (in `_c`/`_d`) | row | `Membership` · value `Free` |
-| | Upgrade to Premium | (in `_d`) | **yes** | infinity icon · `Upgrade to Premium` |
-| | Restore purchases | (in `_d`) | **yes** | dollar icon · `Restore purchases` |
-| **About** | Contact us | (in `_d`/`_e`) | **yes** | mail icon · `Contact us` |
-| | Terms of use | (in `_d`/`_e`) | **yes** | doc icon · `Terms of use` |
-| | Privacy policy | (in `_d`/`_e`) | **yes** | doc icon · `Privacy policy` |
-| **Account** | Link account data | (in `_e`) | **yes** | G icon · `Link account data` |
-| | Manage your reminders | (in `_e`) | **yes** | clock icon · `Manage your reminders` |
-| | Change language | (in `_e`) | **yes** | translate icon · `Change language` · value `English` |
-| **Footer** | App version | (in `_e`) | no | `App version: 4.3.10` |
-| | UID | (in `_e`) | no | `UID:` (empty value) |
+| | Limit screen time | (trong `_b`) | **yes** | clock-restrict icon · `Limit screen time` |
+| | Personalize your conversations | (trong `_b`) | **yes** | sliders icon · `Personalize your conversations` |
+| | Widget selection | (trong `_b`) | **yes** | grid icon · `Widget selection` |
+| | Daily Bible Verse Wallpaper | (trong `_b`) | row + toggle (off, yellow) | `Daily Bible Verse Wallpaper` |
+| **Personal Details** | Age range | (trong `_c`) | **yes** | `Age range` · value `55+` |
+| | Email | (trong `_c`) | **yes** | `Email` · placeholder `Write here…` |
+| | Denomination | (trong `_c`) | **yes** | `Denomination` · value `Pentecostal` |
+| | Church | (trong `_c`) | **yes** | `Church` · placeholder `Write here…` |
+| **Subscription** | Membership | (trong `_c`/`_d`) | row | `Membership` · value `Free` |
+| | Upgrade to Premium | (trong `_d`) | **yes** | infinity icon · `Upgrade to Premium` |
+| | Restore purchases | (trong `_d`) | **yes** | dollar icon · `Restore purchases` |
+| **About** | Contact us | (trong `_d`/`_e`) | **yes** | mail icon · `Contact us` |
+| | Terms of use | (trong `_d`/`_e`) | **yes** | doc icon · `Terms of use` |
+| | Privacy policy | (trong `_d`/`_e`) | **yes** | doc icon · `Privacy policy` |
+| **Account** | Link account data | (trong `_e`) | **yes** | G icon · `Link account data` |
+| | Manage your reminders | (trong `_e`) | **yes** | clock icon · `Manage your reminders` |
+| | Change language | (trong `_e`) | **yes** | translate icon · `Change language` · value `English` |
+| **Footer** | App version | (trong `_e`) | no | `App version: 4.3.10` |
+| | UID | (trong `_e`) | no | `UID:` (value rỗng) |
 
-### Notes
+### Note
 
-- The `Daily Bible Verse Wallpaper` row hosts a yellow Material Switch in the OFF state.
-- Pre-filled `Age range = 55+` and `Denomination = Pentecostal` reflect onboarding quiz answers.
-- Drawer is the **only** entry point observed for: Friends, Widget selection, Limit screen time, Personalize your conversations, Restore purchases, Link account data, Change language, Contact us, Terms, Privacy.
-- "Manage your reminders" is a duplicate entry to the Today-tab "Change reminder" screen (screen 07).
-- "Explore all features" item is presumed to navigate to the same overlay as the Today header sparkle (screen 03) — not verified by tap in this session.
+- Row `Daily Bible Verse Wallpaper` chứa 1 Material Switch màu vàng ở state OFF.
+- Pre-fill `Age range = 55+` và `Denomination = Pentecostal` là answer onboarding quiz.
+- Drawer là entry point **duy nhất** quan sát được cho: Friends, Widget selection,
+  Limit screen time, Personalize your conversations, Restore purchases, Link
+  account data, Change language, Contact us, Terms, Privacy.
+- "Manage your reminders" là duplicate entry sang screen "Change reminder" của
+  tab Today (screen 07).
+- Item "Explore all features" giả định navigate sang cùng overlay với sparkle
+  trên Today header (screen 03) — chưa verify bằng tap trong session này.
 
 ---
 
@@ -297,21 +306,22 @@ A drawer covering the left ~92% of the screen (right `[990,1080]` is the dimmed 
 
 - **Dump**: `screen_03_sparkle.xml`, `_b.xml`, `_c.xml`, `_d.xml`
 - **Screenshot**: `screen_03_sparkle.png`, `_b.png`, `_c.png`, `_d.png`
-- **Entry**: tap sparkle icon (top-centre of Today header)
+- **Entry**: tap sparkle icon (top-centre Today header)
 
 ### Layout
 
-A full-screen overlay with `Explore` H1, a sub-line, a horizontal chip filter, then a scrollable grid of feature buttons grouped by category.
+1 overlay full-screen với H1 `Explore`, sub-line, 1 chip filter ngang, rồi 1
+grid scrollable button feature group theo category.
 
 | Top elements | Text |
 |---|---|
 | H1 | `Explore` |
 | Sub-line | `Discover everything BibleChat has to offer` |
-| Filter chips (horizontal) | `Personalize` (selected, yellow) · `Bible Study` · `Community` · `Journey` |
+| Filter chips (ngang) | `Personalize` (selected, vàng) · `Bible Study` · `Community` · `Journey` |
 
-### Sections (across `_a`–`_d`)
+### Sections (qua `_a`–`_d`)
 
-| Section header | Items (2-column grid) |
+| Section header | Items (grid 2 cột) |
 |---|---|
 | `PERSONALIZE` | Lockscreen · App Widget · Affirmations |
 | `BIBLE STUDY` | Study Plans · Chat · Voice Chat · Reading · Bible Stories · Animations · Kids' Stories |
@@ -319,11 +329,13 @@ A full-screen overlay with `Explore` H1, a sub-line, a horizontal chip filter, t
 | `JOURNEY` | Daily Plan · Calendar · The Bible · Screen Time · Meditation |
 | `LEISURE` | Word Guesser · Bible Trivia |
 
-### Notes
+### Note
 
-- The header chips are visual filters but tapping them was not tested; the page renders all sections regardless.
-- This same screen is presumed to be reachable from the bottom-nav `Explore` tab (`navigation_new_study`) — not verified in this session.
-- Dismiss: `KEYCODE_BACK` returns to Today landing.
+- Chip header là filter visual nhưng tap chưa được test; page render mọi
+  section bất kể chip nào active.
+- Cùng screen này giả định reach được từ bottom-nav tab `Explore`
+  (`navigation_new_study`) — chưa verify trong session này.
+- Dismiss: `KEYCODE_BACK` về Today landing.
 
 ---
 
@@ -331,7 +343,7 @@ A full-screen overlay with `Explore` H1, a sub-line, a horizontal chip filter, t
 
 - **Dump**: `screen_04_streak.xml`, `_b.xml`, `_c.xml`
 - **Screenshot**: `screen_04_streak.png`, `_b.png`, `_c.png`
-- **Entry**: tap streak/calendar pill (top-right of Today header)
+- **Entry**: tap streak/calendar pill (top-right Today header)
 
 ### Layout
 
@@ -340,25 +352,30 @@ A full-screen overlay with `Explore` H1, a sub-line, a horizontal chip filter, t
 | Title | `[354,143][660,221]` | `April 2026` |
 | Close `X` | `[937,132][1069,264]` | (no text/desc) |
 | Day-of-week header row | `[22,275][1058,331]` | `MON` `TUE` `WED` `THU` `FRI` `SAT` `SUN` |
-| Month label | `[44,463][162,529]` | `April` (yellow) |
-| Day cells (April) | individual `View` per day, `[X,Y][X+132, Y+118]` | numbers `1`–`30` |
-| Month label | (in `_c`) | `May` (yellow) |
-| Day cells (May) | (in `_c`) | numbers `1`–`31` |
+| Month label | `[44,463][162,529]` | `April` (vàng) |
+| Day cells (April) | mỗi day 1 `View`, `[X,Y][X+132, Y+118]` | số `1`–`30` |
+| Month label | (trong `_c`) | `May` (vàng) |
+| Day cells (May) | (trong `_c`) | số `1`–`31` |
 
-April grid (in `_a`):
-- Row 1 (week of Mar 30): cells for `1`–`5` (`311,544][1035,662]`)
+April grid (trong `_a`):
+- Row 1 (tuần Mar 30): cell cho `1`–`5` (`311,544][1035,662]`)
 - Row 2: `6`–`12`
 - Row 3: `13`–`19`
 - Row 4: `20`–`26`
 - Row 5: `27`–`30`
 
-In `_a` and `_b`, day `15` displays a yellow ring (75% / streak indicator), day `16` is filled (today). `_c` (after scrolling) reveals all of May (full grid).
+Trong `_a` và `_b`, day `15` hiện ring vàng (75% / streak indicator), day `16`
+filled (today). `_c` (sau khi scroll) hé toàn bộ May (full grid).
 
-### Behaviour
+### Hành vi
 
-- Day cells are individually `clickable=true`, but only days with content (e.g. `15`) navigate. Tapping `14` (past, never started) was a no-op.
-- Tapping day `15` navigates to a session reader for that day's verse — i.e. it acts as a date-picker into the journey reader (screen 09 layout, but read-only review of completed content).
-- Title shows current month only; no month-pagination chevrons observed. Scroll reveals next month inline (May follows April vertically).
+- Day cell đều `clickable=true`, nhưng chỉ day có content (vd `15`) navigate.
+  Tap `14` (quá khứ chưa start) là no-op.
+- Tap day `15` navigate sang session reader của verse hôm đó — tức nó hành xử
+  như date-picker vào journey reader (layout screen 09, nhưng read-only review
+  của content đã hoàn thành).
+- Title chỉ hiện tháng hiện tại; không có chevron pagination tháng. Scroll hé
+  tháng kế inline (May nối tiếp April theo dọc).
 
 ---
 
@@ -366,55 +383,61 @@ In `_a` and `_b`, day `15` displays a yellow ring (75% / streak indicator), day 
 
 - **Dump**: `screen_05_subtitle.xml`, `screen_14_info.xml`
 - **Screenshot**: `screen_05_subtitle.png`, `screen_14_info.png`
-- **Entry**: tap subtitle text (`Starting Your Journey`) **or** the `i` icon next to it
+- **Entry**: tap text subtitle (`Starting Your Journey`) **hoặc** icon `i` cạnh nó
 
-### Observed (visual only — not in uiautomator dump)
+### Observed (visual only — không có trong uiautomator dump)
 
-A frosted overlay tooltip rendered above the Progress bar:
+1 tooltip overlay frosted render trên Progress bar:
 
 | Line | Text |
 |---|---|
 | Title | `Tailored just for you!` |
 | Body | `Your Daily Plan is crafted based on your interactions with the app.` |
-| Close `X` | top-right of tooltip |
+| Close `X` | top-right tooltip |
 
-The tooltip's text nodes do **not** appear in `uiautomator dump`, indicating they are rendered via a Compose Popup/Overlay outside the main composition tree captured by the dump tool. They are visible in the screenshot only.
+Text node của tooltip **không** xuất hiện trong `uiautomator dump`, ám chỉ
+chúng render qua Compose Popup/Overlay nằm ngoài composition tree chính mà tool
+dump bắt được. Chúng chỉ visible trong screenshot.
 
-Dismiss: tap `X` (estimated centre `(957, 760)`) or tap outside.
+Dismiss: tap `X` (centre ước `(957, 760)`) hoặc tap ngoài.
 
 ---
 
 ## Screen 06 — Today Empty States (date-dependent)
 
-### 06_today — Today (Apr 16) before first session
+### 06_today — Today (Apr 16) trước session đầu
 
 - **Dump**: `screen_06_day_today.xml`
 - **Screenshot**: `screen_06_day_today.png`
 
-Header sub-line changes to `Understanding God's Love` (Apr 16's theme). Day strip shows day `16` selected. Card area replaced by an empty state:
+Sub-line header đổi thành `Understanding God's Love` (theme Apr 16). Day strip
+hiện day `16` selected. Vùng card thay bằng 1 empty state:
 
 | Element | Bounds | Text |
 |---|---|---|
-| Calendar+clock empty illustration | (centre, ~`[440,920][640,1120]`) | (icon only) |
+| Illustration calendar+clock | (centre, ~`[440,920][640,1120]`) | (chỉ icon) |
 | Headline | `[66,1203][1014,1455]` | `Not quite time yet.\nCheck back Thursday, 16 April for your Daily Plan session` |
 | Sub | `[72,1521][1009,1688]` | `Your reminder is set for 09:00.\n Would you like to update it?` |
-| CTA (link) | `[290,1704][791,1836]` | `Change reminder` (yellow text) |
+| CTA (link) | `[290,1704][791,1836]` | `Change reminder` (text vàng) |
 
-Progress bar on this state shows `0%`.
+Progress bar trên state này hiện `0%`.
 
 ### 06_future — Future day (Apr 17)
 
 - **Dump**: `screen_06_day_future.xml`
 - **Screenshot**: `screen_06_day_future.png`
 
-Same empty-state layout but headline becomes `Not quite time yet.\nCheck back tomorrow for your Daily Plan session`. Header subtitle becomes `Exploring Scripture`. Title `Apr 17's Journey`.
+Cùng layout empty-state nhưng headline đổi thành `Not quite time yet.\nCheck
+back tomorrow for your Daily Plan session`. Subtitle header đổi thành
+`Exploring Scripture`. Title `Apr 17's Journey`.
 
 ### 06_past_dim — Past unstarted day (Apr 13 / Apr 14)
 
 - **Screenshot**: `screen_06_day_past.png`, `screen_06_day14.png`
-- Behaviour: tapping these cells produced no navigation (page kept displaying previously selected day). They render dimmed in the strip.
+- **Hành vi**: tap các cell này không sinh navigation (page giữ display day
+  trước đó). Render dim trong strip.
 
-### Subtitle themes observed
+### Subtitle theme đã quan sát
 
 | Date | Theme |
 |---|---|
@@ -430,32 +453,36 @@ Same empty-state layout but headline becomes `Not quite time yet.\nCheck back to
 
 - **Dump**: `screen_07_change_reminder.xml`
 - **Screenshot**: `screen_07_change_reminder.png`
-- **Entry**: tap `Change reminder` link in the empty-state (screen 06_today)
+- **Entry**: tap link `Change reminder` trong empty-state (screen 06_today)
 
 | Element | Bounds | Text |
 |---|---|---|
 | Top hit-area (drag handle) | `[44,110][1036,242]` | (no text) |
 | Close `X` | `[915,110][1047,242]` | (no text) |
-| Bell illustration | (centred top) | (icon only) |
+| Bell illustration | (centre top) | (chỉ icon) |
 | Title | `[187,627][894,708]` | `Connect with God Daily` |
 | Body | `[88,774][992,999]` | `Keep your faith journey on track by updating your reminder for the Daily Plan.` |
 | Time-picker chip label | `[277,1065][803,1140]` | `We'll remind you at...` |
-| Time chip | `[292,1184][788,1327]` | `09:00` (with chevron) |
+| Time chip | `[292,1184][788,1327]` | `09:00` (kèm chevron) |
 | Days label | `[367,1459][714,1534]` | `On these days` |
-| Day toggles (M T W T F S S) | seven `View` cells `[66..1014, 1578..1767]` | each cell has letter on top and a circle row below; observed all 7 with check-mark fill |
-| CTA | `[44,1821][1036,1984]` | `Update reminder` (yellow) |
+| Day toggles (M T W T F S S) | 7 cell `View` `[66..1014, 1578..1767]` | mỗi cell có chữ trên top + 1 row circle dưới; quan sát cả 7 đều có check-mark fill |
+| CTA | `[44,1821][1036,1984]` | `Update reminder` (vàng) |
 
 ### 07b — Time picker (Material clock)
 
 - **Dump**: `screen_07_time_picker.xml`
 - **Screenshot**: `screen_07_time_picker.png`
-- **Entry**: tap the time chip (`09:00`) in the sheet
+- **Entry**: tap time chip (`09:00`) trong sheet
 
-A Material 3 TimePicker dialog appears: large `09 : 00` numeric display with hour selector active (digit `9` highlighted), clock face below showing 12-h numerals (`12 1 2 ... 11`) on the inner ring and 24-h numerals (`13 14 15 ... 24`) on the outer ring. Highlighted hand pointing to `9 / 21`.
+1 dialog Material 3 TimePicker xuất hiện: display số `09 : 00` cỡ lớn với hour
+selector active (digit `9` highlight), clock face dưới hiện numeral 12-h
+(`12 1 2 ... 11`) trên ring trong và numeral 24-h (`13 14 15 ... 24`) trên
+ring ngoài. Hand highlight chỉ vào `9 / 21`.
 
-Bottom of the dialog continues to show the day toggles and `Update reminder` button (sheet remains underneath).
+Bottom dialog tiếp tục show day toggle và button `Update reminder` (sheet vẫn
+bên dưới).
 
-Dismiss: `KEYCODE_BACK` closes the time picker, second `KEYCODE_BACK` closes the bottom sheet.
+Dismiss: `KEYCODE_BACK` đóng time picker, `KEYCODE_BACK` lần 2 đóng bottom sheet.
 
 ---
 
@@ -463,9 +490,10 @@ Dismiss: `KEYCODE_BACK` closes the time picker, second `KEYCODE_BACK` closes the
 
 - **Dump**: `screen_08_exclusive_deal.xml`, `_b.xml`
 - **Screenshot**: `screen_08_exclusive_deal.png`, `_b.png`
-- **Entry**: tap the `Exclusive Deal` banner (countdown card on Today landing or in the profile drawer)
+- **Entry**: tap banner `Exclusive Deal` (countdown card trên Today landing
+  hoặc trong profile drawer)
 
-Layout (full-screen, dove illustration in upper-right corner):
+Layout (full-screen, illustration chim bồ câu góc phải trên):
 
 | Element | Text |
 |---|---|
@@ -476,17 +504,22 @@ Layout (full-screen, dove illustration in upper-right corner):
 | Bullet 3 | `Personalized Audio Daily Devotionals` |
 | Toggle row | `I want to try the app for free` (Material switch ON) |
 | Plan A (selected) | `7 Days Free Trial` · badge `SAVE 36%` · `Then ~~158549.98~~ ₫105,000 per week.\nNo payment now` |
-| Plan B (after scroll, label) | `Best Price of the Year` |
+| Plan B (sau scroll, label) | `Best Price of the Year` |
 | Plan B (card) | `12-Month Access` · `Billed yearly at ₫880,000` |
 | Footer note | `Cancel anytime before April 23 2026.\nNo risks, no charges.` |
-| CTA | `Try for Free →` (yellow) |
-| Footer links | `Terms of use` · `Privacy policy` · `Restore` |
+| CTA | `Try for Free →` (vàng) |
+| Footer link | `Terms of use` · `Privacy policy` · `Restore` |
 
-### Notes
+### Note
 
-- Pricing rendered in **VND** (`₫`). Strikethrough Vietnamese-locale price `158549.98` is a leftover from the underlying Play Billing micros conversion — likely `158,549.98` ≈ `158,550`/week if the conversion fix wasn't applied. The displayed promo price is `₫105,000/week`.
-- "Cancel anytime before April 23 2026" = trial-end date (capture day Apr 16 + 7 days).
-- The toggle ON state binds to Plan A; toggling off presumably switches to Plan B (not verified — left to operator).
+- Pricing render bằng **VND** (`₫`). Strikethrough giá Vietnamese-locale
+  `158549.98` là leftover từ conversion micros của Play Billing — có khả năng
+  `158,549.98` ≈ `158,550`/week nếu fix conversion chưa apply. Giá promo hiển
+  thị là `₫105,000/week`.
+- "Cancel anytime before April 23 2026" = ngày kết thúc trial (capture day
+  Apr 16 + 7 ngày).
+- Toggle ON state bind vào Plan A; toggle off giả định switch sang Plan B
+  (chưa verify — để operator test).
 
 ---
 
@@ -496,104 +529,108 @@ Layout (full-screen, dove illustration in upper-right corner):
 
 - **Dump**: `screen_09_verse_read.xml`
 - **Screenshot**: `screen_09_verse_read.png`
-- **Entry**: tap `Read` button on the Verse card (or tap a completed day in Calendar / week-strip)
+- **Entry**: tap button `Read` trên Verse card (hoặc tap day đã hoàn thành
+  trong Calendar / week-strip)
 
 | Element | Bounds | Text |
 |---|---|---|
 | Header title | `[375,154][705,220]` | `Your Journey` |
 | Close `X` | `[926,121][1058,253]` | (no text) |
 | Progress label | `[44,297][529,363]` | `Progress for Apr 15` |
-| Progress percent | `[921,297][1036,369]` | `75%` (rises to `100%` after later sessions) |
+| Progress percent | `[921,297][1036,369]` | `75%` (lên `100%` sau session sau) |
 | Card type label | `[349,568][656,620]` | `YOUR VERSE` |
 | Card duration | `[695,569][802,620]` | `1 MIN` |
 | Verse body | `[88,906][992,1351]` | `Fear not, for I am with you; Be not dismayed, for I am your God. I will strengthen you, Yes, I will help you, I will uphold you with My righteous right hand.` |
-| Citation | `[372,1403][709,1492]` | `Isaiah 41:10` (yellow) |
-| Bottom action — left (thumbs/dislike) | `[44,1852][220,2028]` | (icon only) |
-| Bottom action — middle (`Chat to learn more`) | `[226,1852][854,2028]` | `Chat to learn more` + chat-bubble icon |
-| Bottom action — right (next/arrow) | `[863,1852][1036,2028]` | `→` icon |
+| Citation | `[372,1403][709,1492]` | `Isaiah 41:10` (vàng) |
+| Bottom action — left (thumbs/dislike) | `[44,1852][220,2028]` | (chỉ icon) |
+| Bottom action — middle (`Chat to learn more`) | `[226,1852][854,2028]` | `Chat to learn more` + icon chat-bubble |
+| Bottom action — right (next/arrow) | `[863,1852][1036,2028]` | icon `→` |
 
-Background = the same nature/ocean image used on the Today card thumbnail.
+Background = cùng image nature/ocean dùng cho thumbnail Today card.
 
 ### 09b — Listen mode (audio playback)
 
 - **Dump**: `screen_09_verse_listen.xml`
 - **Screenshot**: `screen_09_verse_listen.png`
-- **Entry**: tap `Listen` on the Verse card (or the play button in 09a — not verified)
+- **Entry**: tap `Listen` trên Verse card (hoặc button play trong 09a — chưa verify)
 
-Same screen as 09a but the bottom action bar is replaced by an audio-player toolbar:
+Cùng screen 09a nhưng bottom action bar thay bằng 1 toolbar audio-player:
 
 | Element | Text / icon |
 |---|---|
 | Audio progress bar | `——————————` |
-| Time read-out (left) | `00:02` (during playback) |
+| Time read-out (left) | `00:02` (lúc playing) |
 | Time read-out (right) | `00:09` (track length) |
-| Share | left icon |
-| Previous | back-skip icon |
-| Play / Pause | centre (paused button shown after starting) |
-| Next | forward-skip icon |
-| Replay | circular-arrow icon |
+| Share | icon trái |
+| Previous | icon back-skip |
+| Play / Pause | giữa (button paused show sau khi start) |
+| Next | icon forward-skip |
+| Replay | icon circular-arrow |
 
 ### 09c — "Chat to learn more" → Chat conversation
 
 - **Dump**: `screen_09_verse_chat.xml`
 - **Screenshot**: `screen_09_verse_chat.png`
-- **Entry**: tap the middle bottom-action
+- **Entry**: tap bottom-action giữa
 
-Navigates into the **Chat feature cluster** (already documented in `chat_feature_spec.md`):
+Navigate vào **cluster feature Chat** (đã document trong `chat_feature_spec.md`):
 
 | Element | Text |
 |---|---|
 | Header title | `Chat` |
-| Header back arrow | left |
-| Header right icons | `?5` (help with badge `5`) · `tT` (font size) |
-| Pre-filled context bubble | `Fear not, for I am with you; Be not dismayed, for I am your God. I will strengthen you, Yes, I will help you, I will uphold you with My righteous right hand.` |
-| Bubble actions | thumbs-up · thumbs-down · `Copy` · `Share` |
-| Composer | `Message` placeholder + chat-bubble icon + send arrow |
+| Header back arrow | trái |
+| Header right icons | `?5` (help với badge `5`) · `tT` (font size) |
+| Bubble context pre-fill | `Fear not, for I am with you; Be not dismayed, for I am your God. I will strengthen you, Yes, I will help you, I will uphold you with My righteous right hand.` |
+| Bubble action | thumbs-up · thumbs-down · `Copy` · `Share` |
+| Composer | placeholder `Message` + icon chat-bubble + arrow send |
 
-The verse text is already inserted into the conversation as a system/context message before the user types anything.
+Verse text đã insert sẵn vào conversation như 1 message system/context trước
+khi user gõ gì.
 
 ---
 
 ## Screen 10 — Devotional Reader
 
-- **Dump**: `screen_10_devotional.xml` (expanded card on Today), `screen_10_devotional_read.xml` + `_b/_c/_d.xml`
+- **Dump**: `screen_10_devotional.xml` (card expanded trên Today), `screen_10_devotional_read.xml` + `_b/_c/_d.xml`
 - **Screenshot**: `screen_10_devotional.png`, `screen_10_devotional_read.png`, `_b.png`, `_c.png`, `_d.png`
 
-### 10-card — Devotional card expanded (on Today landing)
+### 10-card — Devotional card expanded (trên Today landing)
 
-When tapping the collapsed `PERSONALIZED DEVOTIONAL` card, it expands and the Verse card collapses:
+Khi tap card collapsed `PERSONALIZED DEVOTIONAL`, nó expand và Verse card collapse:
 
 | Element | Bounds | Text |
 |---|---|---|
 | Card title | `[88,1024][904,1154]` | `Strengthened by His Righteous Hand` |
 | Tag pill 1 | `[110,1198][222,1250]` | `FAITH` |
 | Tag pill 2 | `[277,1198][797,1250]` | `OVERCOMING CHALLENGES` |
-| `Listen` button | `[259,1340][424,1415]` | `Listen` |
-| `Read` button | `[747,1340][885,1415]` | `Read` |
+| Button `Listen` | `[259,1340][424,1415]` | `Listen` |
+| Button `Read` | `[747,1340][885,1415]` | `Read` |
 
-Card background = a hands-raised-in-prayer image (gradient purple/pink overlay).
+Background card = 1 image hands-raised-in-prayer (gradient overlay tím/hồng).
 
 ### 10-read — Devotional Reader (full text)
 
-Layout matches Screen 09a (same `Your Journey` header, progress bar, bottom action bar). The body is a long scrollable devotional text. Across `_read` → `_d` (3 swipes) the full body was captured:
+Layout match Screen 09a (cùng header `Your Journey`, progress bar, bottom action
+bar). Body là 1 đoạn devotional dài scrollable. Qua `_read` → `_d` (3 swipe)
+toàn bộ body đã được capture:
 
 > **Paragraph 1** — `In this verse, God provides a profound reassurance to His people. He reminds us not to fear, for He is with us. This simple yet powerful promise is a cornerstone of the Christian faith. It assures us of God's unwavering presence, no matter the challenges we face.`
 >
 > **Paragraph 2** — `Reflecting on this, it is essential to understand that fear is a natural human response. We often encounter situations that seem beyond our control or comprehension. However, God's message through Isaiah is that His presence is constant and unyielding. Our faith may waver, but His promise does not.`
 >
-> **Paragraph 3** — `The verse also speaks of God's strength and support. He commits to upholding us with…` (continues in `_c`) `…In our daily lives, we face numerous challenges — from personal struggles to global crises. This verse encourages us to shift our focus from our fears to God's presence and strength. By doing so, we find the courage to face our challenges head-on, knowing that we are not alone.`
+> **Paragraph 3** — `The verse also speaks of God's strength and support. He commits to upholding us with…` (tiếp trong `_c`) `…In our daily lives, we face numerous challenges — from personal struggles to global crises. This verse encourages us to shift our focus from our fears to God's presence and strength. By doing so, we find the courage to face our challenges head-on, knowing that we are not alone.`
 >
-> **Paragraph 4 (closing prompt)** — `For further reflection, consider this: What fears or challenges in these situations?` (continues in `_d`) `Take a moment today to pray and invite God into your fears. Ask Him to fill you with His peace and support, trusting that His righteous right hand is upholding you every step of the way.`
+> **Paragraph 4 (closing prompt)** — `For further reflection, consider this: What fears or challenges in these situations?` (tiếp trong `_d`) `Take a moment today to pray and invite God into your fears. Ask Him to fill you with His peace and support, trusting that His righteous right hand is upholding you every step of the way.`
 >
 > **Citation** — `Isaiah 41:10`
 
-Bottom action bar identical to Screen 09a (thumbs-down icon · `Chat to learn more` · `→`).
+Bottom action bar identical với Screen 09a (icon thumbs-down · `Chat to learn more` · `→`).
 
 ---
 
 ## Screen 11 — Prayer Reader
 
-- **Dump**: `screen_11_prayer.xml` (expanded card), `screen_11_prayer_read.xml`
+- **Dump**: `screen_11_prayer.xml` (card expanded), `screen_11_prayer_read.xml`
 - **Screenshot**: `screen_11_prayer.png`, `screen_11_prayer_read.png`
 
 ### 11-card — Prayer card expanded
@@ -602,22 +639,24 @@ Bottom action bar identical to Screen 09a (thumbs-down icon · `Chat to learn mo
 |---|---|
 | Card type / duration | `PRAYER OF THE DAY` · `2 MIN` |
 | Card title | `Strength in God` |
-| `Listen` button | `Listen` |
-| `Read` button | `Read` |
+| Button `Listen` | `Listen` |
+| Button `Read` | `Read` |
 
-Card background = a hands-raised silhouette image.
+Background card = image silhouette hands-raised.
 
 ### 11-read — Prayer Reader
 
-Same `Your Journey` shell. Body:
+Cùng shell `Your Journey`. Body:
 
-> **Title strip** — `PRAYER OF THE DAY · 2 MIN` (small caps, white text on dark)
+> **Title strip** — `PRAYER OF THE DAY · 2 MIN` (small caps, text trắng trên nền tối)
 >
 > **Body** — `Heavenly Father, I come before You with an open heart, seeking Your guidance and strength as I embark on this journey of faith and understanding. Help me to fully embrace Your love and wisdom, to see Your hand at work in every aspect of my life. May Your Word be a lamp unto my feet and a light unto my path, guiding me through each day with clarity and purpose.`
 
-Bottom action bar variant: thumbs-down · `Chat to learn more` · **`Done`** (white pill instead of `→` arrow — because this is the last incomplete session of the day).
+Variant bottom action bar: thumbs-down · `Chat to learn more` · **`Done`** (pill
+trắng thay vì arrow `→` — vì đây là session incomplete cuối cùng của ngày).
 
-After tapping `Done` (or `KEYCODE_BACK`), the day-progress reaches `100%` and the Day-Complete celebration screen appears (Screen 12).
+Sau khi tap `Done` (hoặc `KEYCODE_BACK`), day-progress lên `100%` và screen
+Day-Complete celebration xuất hiện (Screen 12).
 
 ---
 
@@ -625,21 +664,25 @@ After tapping `Done` (or `KEYCODE_BACK`), the day-progress reaches `100%` and th
 
 - **Dump**: `screen_12_day_complete.xml`
 - **Screenshot**: `screen_12_day_complete.png`
-- **Entry**: complete the last incomplete session of the day (here: tap `Done` on Prayer Reader)
+- **Entry**: hoàn thành session incomplete cuối ngày (ở đây: tap `Done` trên
+  Prayer Reader)
 
 | Element | Text |
 |---|---|
-| Fire illustration | (yellow gradient flame, centred) |
-| Counter | `1` (large yellow) |
-| Label | `day streak` (yellow) |
-| 3-dot streak progress (horizontal) | dot 1 filled · dot 2 outline · dot 3 outline |
+| Fire illustration | (flame gradient vàng, centred) |
+| Counter | `1` (vàng cỡ lớn) |
+| Label | `day streak` (vàng) |
+| Streak progress 3-dot (ngang) | dot 1 fill · dot 2 outline · dot 3 outline |
 | Sub-text | `Stay faithful on your 3-day journey, and a special blessing awaits you: 33 free questions.` |
-| Compact week strip | `Mo 13 · Tu 14 · We 🔥 · Th 16 · Fr 17 · Sa 18 · Su` (today = fire icon) |
-| CTA | `Continue` (yellow pill) |
+| Compact week strip | `Mo 13 · Tu 14 · We 🔥 · Th 16 · Fr 17 · Sa 18 · Su` (today = icon fire) |
+| CTA | `Continue` (pill vàng) |
 
-Tapping `Continue` returns to the Today landing for the same day (now showing all cards `DONE`, progress `100%`, fire badge `1`).
+Tap `Continue` về Today landing cùng day (giờ show mọi card `DONE`, progress
+`100%`, badge fire `1`).
 
-This screen mirrors Block N of `onboarding_spec.md` (33-free-questions promise), confirming the same celebration is reused for daily streak milestones, not just first-day onboarding.
+Screen này mirror Block N của `onboarding_spec.md` (33-free-questions promise),
+confirm cùng celebration được reuse cho mốc daily streak, không chỉ first-day
+onboarding.
 
 ---
 
@@ -647,19 +690,19 @@ This screen mirrors Block N of `onboarding_spec.md` (33-free-questions promise),
 
 - **Dump**: `screen_13_peace.xml`
 - **Screenshot**: `screen_13_peace.png`
-- **Entry**: tap `PEACE AND CALM` card (last card on Today landing)
+- **Entry**: tap card `PEACE AND CALM` (card cuối trên Today landing)
 
-Bottom sheet (full screen with darkened backdrop):
+Bottom sheet (full screen với backdrop tối):
 
 | Element | Bounds | Text |
 |---|---|---|
-| Top close hit-zone | `[0,0][1080,122]` | desc `Close sheet` |
+| Top hit-zone close | `[0,0][1080,122]` | desc `Close sheet` |
 | Title | `[44,210][1036,650]` | `Share an anxiety, sin or addiction you're ready to release. A personal moment of grace will follow` |
 | Disclaimer | `[44,694][1036,844]` | `Your privacy is guaranteed and your information will remain confidential.` |
 | EditText | `[66,954][1014,1302]` | placeholder `Describe here` |
-| `Continue` CTA | `[44,1777][1036,1962]` | `Continue` (greyed/disabled until the EditText has content) |
+| CTA `Continue` | `[44,1777][1036,1962]` | `Continue` (xám/disabled cho đến khi EditText có content) |
 
-Dismiss: `KEYCODE_BACK` or tap top hit-zone.
+Dismiss: `KEYCODE_BACK` hoặc tap top hit-zone.
 
 ---
 
@@ -667,7 +710,7 @@ Dismiss: `KEYCODE_BACK` or tap top hit-zone.
 
 - **Dump**: `screen_15_badge.xml`, `_b.xml`, `_c.xml`, `_d.xml`, `_e.xml`
 - **Screenshot**: `screen_15_badge.png`, `_b.png`, `_c.png`, `_d.png`, `_e.png`
-- **Entry**: tap the Light Points badge (`30` / `100`) at top-right of Today header
+- **Entry**: tap Light Points badge (`30` / `100`) ở top-right Today header
 
 ### Layout
 
@@ -676,35 +719,48 @@ Full-screen, scrollable.
 | Element | Text |
 |---|---|
 | Close `X` | top-left |
-| Header | `Available Points : ⊙ 100` (current balance) |
+| Header | `Available Points : ⊙ 100` (balance hiện tại) |
 
-### Sections (top → bottom across `_a`–`_e`)
+### Sections (top → bottom qua `_a`–`_e`)
 
-| Section | Items (icon · label · cost in points or VND) |
+| Section | Items (icon · label · cost theo point hoặc VND) |
 |---|---|
 | `Premium` | gift · `1-Month Premium` · `⊙ 5000` |
 | `App Unlocks` | image-frame · `Live Wallpaper` · `⊙ 500` |
 | `Chat Unlocks` | `?` · `5 Questions` · `⊙ 250`<br>`?` · `25 Questions` · `⊙ 1000`<br>`?` · `100 Questions` · `⊙ 2500` |
-| `Light Points` (purchase tiers) | sparkle · `100 Light Points` · `₫30,000`<br>`500 Light Points` · `₫108,000`<br>`1.000 Light Points` · `₫198,000`<br>`2.500 Light Points` · `₫391,000`<br>`10.000 Light Points` · `₫1,300,000` |
-| `Study Unlocks` (each `⊙ 250`) | `Loved, then loving` · `The Heart of Thanksgiving` · `Faith for the Impossible` · `Rising above Offense` · `Singleness Rooted in Christ` · `Being a Disciple in the [...]` · `God's Word at Life's Core` · `The Life-Changing Effects of Praise` · `The Song of Songs - A Love Like No Other` · `Living by Faith - In Every Season of Life` · `Living by Faith - In Every Role We Fill` · `Living by Faith - In Abundance or Need` · `Salvation Plan: Genesis to Revelation` · `Cultivating Godly [...]` · `Leadership & Professional Development` · `Godly & Healthy Relationships` · `Fullness of Being` · `Emotional Well-Being` · `Mental Well-Being` · `The Power of Thanksgiving` |
+| `Light Points` (tier purchase) | sparkle · `100 Light Points` · `₫30,000`<br>`500 Light Points` · `₫108,000`<br>`1.000 Light Points` · `₫198,000`<br>`2.500 Light Points` · `₫391,000`<br>`10.000 Light Points` · `₫1,300,000` |
+| `Study Unlocks` (mỗi cái `⊙ 250`) | `Loved, then loving` · `The Heart of Thanksgiving` · `Faith for the Impossible` · `Rising above Offense` · `Singleness Rooted in Christ` · `Being a Disciple in the [...]` · `God's Word at Life's Core` · `The Life-Changing Effects of Praise` · `The Song of Songs - A Love Like No Other` · `Living by Faith - In Every Season of Life` · `Living by Faith - In Every Role We Fill` · `Living by Faith - In Abundance or Need` · `Salvation Plan: Genesis to Revelation` · `Cultivating Godly [...]` · `Leadership & Professional Development` · `Godly & Healthy Relationships` · `Fullness of Being` · `Emotional Well-Being` · `Mental Well-Being` · `The Power of Thanksgiving` |
 | `Coming Soon` | shield-icon · `Special Study` |
 
-### Notes
+### Note
 
-- Number formatting in the Light Points purchase tiers uses **dot as thousands separator** (`1.000`, `2.500`, `10.000`) — Vietnamese locale. The cost column uses **comma as thousands separator** (`30,000`, `1,300,000`) — also acceptable in `vi-VN`. Inconsistent within the same screen.
-- `5 / 25 / 100 Questions` correlate to the `?5` badge seen in the Chat header (Screen 09c) — i.e. the user currently has 5 free Q&A credits.
-- Day-Complete celebration (Screen 12) promises `33 free questions` after a 3-day streak — a third source of Chat credits, distinct from the `Chat Unlocks` tier and the bonus that ships with `1-Month Premium`.
+- Format số ở tier purchase Light Points dùng **dấu chấm là thousand
+  separator** (`1.000`, `2.500`, `10.000`) — locale Vietnamese. Cột cost dùng
+  **dấu phẩy là thousand separator** (`30,000`, `1,300,000`) — cũng acceptable
+  trong `vi-VN`. Inconsistent trong cùng 1 screen.
+- `5 / 25 / 100 Questions` correlate với badge `?5` thấy trong Chat header
+  (Screen 09c) — tức user hiện có 5 free Q&A credit.
+- Day-Complete celebration (Screen 12) promise `33 free questions` sau 3-day
+  streak — nguồn Chat credit thứ 3, distinct với tier `Chat Unlocks` và bonus
+  ship cùng `1-Month Premium`.
 
 ---
 
 ## Cross-screen invariants
 
-- All session reader screens (Verse / Devotional / Prayer) share an identical chrome:
-  - Header: `Your Journey` title + `X` close at `[926,121][1058,253]` (and a back-arrow at left for inner navigation, when entered via Chat)
+- Mọi screen session reader (Verse / Devotional / Prayer) chia chung 1 chrome
+  identical:
+  - Header: title `Your Journey` + `X` close ở `[926,121][1058,253]` (và back-arrow
+    bên trái cho navigation nội, khi entry qua Chat)
   - `Progress for <date>` + percent
-  - Card type label (small caps, e.g. `YOUR VERSE`) + duration (`1 MIN`)
-  - Bottom action bar: thumbs-down (left) · `Chat to learn more` (middle) · `→` arrow / `Done` pill (right)
-- The bottom action bar's right slot is `→` while there are remaining incomplete sessions for the day, and switches to `Done` on the last session.
-- The Today landing's Light Points badge sums to current point balance; observed values `30` (initial) → `100` after completing Verse + Devotional + Prayer of Apr 15. Each completed session likely awards points (precise rule not measured here).
-- Streak counter (fire icon on the calendar pill) was `0` at start, `1` after the first Day-Complete event of the session.
-- All currency rendered in `₫` (Vietnamese đồng) per device locale.
+  - Card type label (small caps, vd `YOUR VERSE`) + duration (`1 MIN`)
+  - Bottom action bar: thumbs-down (trái) · `Chat to learn more` (giữa) · arrow
+    `→` / pill `Done` (phải)
+- Slot phải của bottom action bar là `→` khi còn session incomplete cho ngày, và
+  switch sang `Done` ở session cuối.
+- Light Points badge trên Today landing sum lên balance point hiện tại; quan sát
+  `30` (đầu) → `100` sau khi hoàn thành Verse + Devotional + Prayer của Apr 15.
+  Mỗi session hoàn thành có khả năng award point (rule chính xác chưa đo ở đây).
+- Streak counter (icon fire trên calendar pill) là `0` lúc start, `1` sau Day-
+  Complete event đầu của session.
+- Mọi currency render bằng `₫` (Vietnamese đồng) theo locale device.
