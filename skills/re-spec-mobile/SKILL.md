@@ -252,6 +252,11 @@ adb shell input keyevent KEYCODE_BACK
 
 ### Phase 3 — Reset handoff (khi stuck)
 
+Khi app-explorer trả `BLOCKED` (modal trap, captcha, paywall, BACK nuốt, ...).
+2 mode tùy `profile.pm_channel`:
+
+#### Mode A — Console fallback (không có Telegram)
+
 Tạm dừng và hỏi user theo template chuẩn:
 
 ```
@@ -261,8 +266,64 @@ Stuck ở <mô tả screen>. Cần bạn:
 Sau đó reply: ready, <feature>, <state mới>
 ```
 
+#### Mode B — Telegram bridge (có `profile.pm_channel`)
+
+Agent app-explorer (hoặc orchestrator) tự gọi:
+
+```bash
+re-spec-pm-ask-stuck <feature> \
+  --screen-label "<screen_id_or_label>" \
+  --reason "<1-câu lý do stuck>" \
+  --options "1) <option_a>; 2) <option_b>; 3) <option_c>"
+```
+
+Bot post message lên Telegram cho PM (kèm format reply mong đợi). Loop sync:
+
+```bash
+re-spec-pm-sync <feature>
+# exit 0 → có verdict, đọc result.folded[].verdict
+# exit 2 → chưa có reply, poll lại (recommend max 30 phút)
+```
+
+PM reply 1 trong 4 format:
+
+| Reply | Verdict | Action của agent |
+|---|---|---|
+| `action: <text>` | `action` | Agent thực hiện instruction (vd "tap (540, 1200)", "swipe up 800ms"). Phải verify-after bằng dump |
+| `manual: <text>` | `manual` | Print instruction cho user trong Claude Code, đợi user thao tác device + reply "ready, <state>" |
+| `skip` hoặc `skip <reason>` | `skip` | Document gap trong final report, bump `screen_skip_count`, continue feature khác |
+| `abort` hoặc `abort <reason>` | `abort` | Orchestrator dừng feature, commit current state, không tiếp |
+
+#### Auto-skip threshold
+
+Nếu cùng `screen_label` đã skip ≥ `profile.pm_channel.stuck_auto_skip_threshold`
+lần (default 3), `re-spec-pm-ask-stuck` **tự return verdict=auto_skip** (exit
+code 3), KHÔNG post lên Telegram nữa. Tránh spam PM cho stuck không cứu được.
+
+#### Audit log
+
+Mọi stuck event log vào `<feature_root>/<feature>/.stuck_log.json` (gitignored,
+runtime state). Format:
+
+```json
+{
+  "feature": "<name>",
+  "events": [
+    {
+      "at": "...", "screen_label": "modal_v01", "reason": "...",
+      "verdict": "manual", "instruction": "...",
+      "by": "telegram_pm", "resolved_at": "...", "message_id": 123
+    }
+  ],
+  "screen_skip_count": {"modal_v01": 2}
+}
+```
+
+#### Anti-pattern
+
 **KHÔNG** tự động `pm clear` package. **KHÔNG** force-restart app bằng
-`am start` — thường mất tab/scroll state. Chỉ user reset.
+`am start` — thường mất tab/scroll state. Chỉ user reset (mode A) hoặc PM
+trả `manual:` (mode B) chỉ thị reset.
 
 ### Phase 4 — Coverage check (giữa loop, tự động)
 
@@ -602,11 +663,12 @@ re-spec-app-overview                             # render/refresh spec/app_overv
 re-spec-app-overview --check                    # lint platform-specific tokens
 re-spec-app-overview --section REUSE_MAP        # debug: 1 section ra stdout
 
-# Telegram PM bridge (3 gate)
+# Telegram PM bridge (3 gate + Phase 3 stuck)
 re-spec-pm-init                                  # 1 lần / project — lấy chat_id
 re-spec-pm-ask <feature> --gate scope            # Gate 1: post Open Question
 re-spec-pm-ask <feature> --gate coverage         # Gate 2: post xin pass/fail
 re-spec-pm-ask <feature> --gate spec             # Gate 3: post Open Question §7
+re-spec-pm-ask-stuck <feature> --screen-label X --reason Y --options Z   # Phase 3
 re-spec-pm-sync <feature>                        # poll reply, fold vào file
 
 # MCP server (auto-load qua .mcp.json; register thủ công ở user scope:)

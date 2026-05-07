@@ -180,6 +180,57 @@ Flag `--scope` phân loại MISS thành `must_visit_screen` / `optional_screen` 
 3. Clickable trong **optional_screen**
 4. Skip hoàn toàn **out_of_scope_screen** + **unscoped** (cho đến khi xong must_visit)
 
+### Step 4.5 — Stuck handoff (giữa loop, khi không tự thoát được)
+
+**Khi nào**: tap chuẩn không sang screen mới + back trapped + swipe-down không
+dismiss + thử 2-3 path khác đều dead. KHÔNG phải environment failure (đó là
+BLOCKED), mà là chỗ cần human thao tác / chỉ thị.
+
+**Quyết định mode** dựa trên `profile.pm_channel`:
+
+#### Mode A — không có pm_channel (console fallback)
+
+Trả về cho orchestrator với status `STUCK` (khác BLOCKED) kèm:
+
+```
+STUCK feature=<name> screen_label=<label> reason=<1 câu>
+options:
+  1. <gợi ý action 1>
+  2. <gợi ý action 2>
+  3. <gợi ý action 3>
+```
+
+Orchestrator sẽ in template handoff cho user trong Claude Code.
+
+#### Mode B — có pm_channel (Telegram bridge)
+
+Tự gọi:
+
+```bash
+re-spec-pm-ask-stuck <feature> \
+  --screen-label "<screen_label>" \
+  --reason "<1 câu lý do>" \
+  --options "1) <a>; 2) <b>; 3) <c>"
+```
+
+Exit code:
+- `0` — posted, đợi PM reply. Tiếp tục `re-spec-pm-sync <feature>` mỗi 30s
+  (max 30 phút) cho tới khi `result.folded[]` có entry kind=stuck_help
+- `3` — auto-skip (cùng screen đã skip ≥ threshold). Document gap, continue
+  feature khác
+
+PM verdict 4 dạng → action theo `result.folded[].verdict`:
+
+| Verdict | Action |
+|---|---|
+| `action` | Thực hiện `instruction` (tap/swipe text), verify dump sau, capture lại |
+| `manual` | Trả về orchestrator status `STUCK_MANUAL` kèm instruction. Orchestrator in cho user; user thao tác device + reply ready |
+| `skip` | Document anchor này vào `gaps:` final report, continue |
+| `abort` | Stop loop, trả status `BLOCKED: pm_aborted` |
+
+**KHÔNG retry vô hạn**. Nếu sync 30 phút không reply → trả status
+`STUCK_TIMEOUT: <screen_label>` về orchestrator để fallback console.
+
 ### Step 5 — Final report
 
 Stop capture. Trả về 1 trong:
@@ -187,6 +238,7 @@ Stop capture. Trả về 1 trong:
 - **DONE** — mọi must_visit đã capture, 0 unreachable
 - **DONE-PARTIAL** — 1 vài must_visit unreachable nhưng đã document (PM sửa scope hoặc accept)
 - **BLOCKED** — environment failure ngăn capture tiếp (Portal chết, ...)
+- **STUCK** / **STUCK_MANUAL** / **STUCK_TIMEOUT** — pause cần human (xem Step 4.5)
 
 Format (Markdown, không fenced code, không preamble):
 

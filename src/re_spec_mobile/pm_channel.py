@@ -44,9 +44,16 @@ TELEGRAM_API = "https://api.telegram.org"
 GATE_SCOPE = "scope"
 GATE_COVERAGE = "coverage"
 GATE_SPEC = "spec"
+GATE_STUCK = "stuck"   # phase 3 reset handoff (không phải gate review chuẩn)
 
 KIND_QUESTION = "question"
 KIND_COVERAGE_SIGNOFF = "coverage_signoff"
+KIND_STUCK_HELP = "stuck_help"
+
+# Auto-skip threshold: nếu cùng screen_label đã có >= STUCK_AUTO_SKIP_THRESHOLD
+# event verdict=skip → ask_stuck_help tự return verdict=auto_skip không spam PM.
+STUCK_AUTO_SKIP_THRESHOLD = 3
+STUCK_VERDICTS = ("action", "manual", "skip", "abort", "auto_skip")
 
 # Anchor heading: "### Q-01: <text> {#feature/question/q_01}"
 ANCHOR_HEADING_RE = re.compile(
@@ -359,6 +366,165 @@ def _fold_coverage_signoff(coverage_md: Path, reply_text: str) -> tuple[bool, st
     return True, verdict
 
 
+# ---------------- Stuck-help: log persistence + verdict parser ------------
+
+
+def stuck_log_path(profile: Profile, feature: str) -> Path:
+    return profile.feature_dir(feature) / ".stuck_log.json"
+
+
+def load_stuck_log(profile: Profile, feature: str) -> dict[str, Any]:
+    p = stuck_log_path(profile, feature)
+    if not p.exists():
+        return {"feature": feature, "events": [], "screen_skip_count": {}}
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def save_stuck_log(profile: Profile, feature: str, log: dict[str, Any]) -> None:
+    p = stuck_log_path(profile, feature)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(log, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def parse_stuck_verdict(reply_text: str) -> tuple[str | None, str]:
+    """Parse PM reply → (verdict, instruction). Returns (None, "") if reply
+    doesn't match any of the 4 expected formats — caller should ignore.
+
+    Formats:
+        action: <text>     → ("action",  text)
+        manual: <text>     → ("manual",  text)
+        skip               → ("skip",    "")
+        skip <reason>      → ("skip",    reason)
+        abort              → ("abort",   "")
+        abort <reason>     → ("abort",   reason)
+    """
+    text = reply_text.strip()
+    if not text:
+        return None, ""
+    lower = text.lower()
+    if lower.startswith("action:"):
+        return "action", text.split(":", 1)[1].strip()
+    if lower.startswith("manual:"):
+        return "manual", text.split(":", 1)[1].strip()
+    parts = text.split(maxsplit=1)
+    head = parts[0].lower()
+    rest = parts[1] if len(parts) > 1 else ""
+    if head == "skip":
+        return "skip", rest.strip()
+    if head == "abort":
+        return "abort", rest.strip()
+    return None, ""
+
+
+def append_stuck_event(
+    profile: Profile,
+    feature: str,
+    *,
+    screen_label: str,
+    reason: str,
+    options: str,
+    verdict: str,
+    instruction: str,
+    message_id: int | None = None,
+    asked_at: str | None = None,
+) -> None:
+    log = load_stuck_log(profile, feature)
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    log["events"].append({
+        "at": asked_at or now,
+        "screen_label": screen_label,
+        "reason": reason,
+        "options": options,
+        "verdict": verdict,
+        "instruction": instruction,
+        "by": "telegram_pm" if verdict != "auto_skip" else "auto",
+        "resolved_at": now,
+        "message_id": message_id,
+    })
+    if verdict in ("skip", "auto_skip"):
+        cnt = log.setdefault("screen_skip_count", {})
+        cnt[screen_label] = int(cnt.get(screen_label, 0)) + 1
+    save_stuck_log(profile, feature, log)
+
+
+# ---------------- Stuck-help: ask flow -------------------------------------
+
+
+def ask_stuck_help(
+    profile: Profile,
+    feature: str,
+    *,
+    screen_label: str,
+    reason: str,
+    options: str,
+) -> dict[str, Any]:
+    """Post stuck-help message lên Telegram. Pre-check auto-skip threshold:
+    nếu screen_label đã skip >= threshold lần → return verdict=auto_skip không post.
+    Threshold đọc từ profile.pm_channel.stuck_auto_skip_threshold (default 3)."""
+    pm_cfg = profile.raw.get("pm_channel") or {}
+    threshold = int(pm_cfg.get("stuck_auto_skip_threshold") or STUCK_AUTO_SKIP_THRESHOLD)
+    log = load_stuck_log(profile, feature)
+    skip_count = int((log.get("screen_skip_count") or {}).get(screen_label, 0))
+    if skip_count >= threshold:
+        append_stuck_event(
+            profile, feature,
+            screen_label=screen_label, reason=reason, options=options,
+            verdict="auto_skip", instruction="",
+        )
+        return {
+            "gate": GATE_STUCK,
+            "verdict": "auto_skip",
+            "reason": f"screen '{screen_label}' đã skip {skip_count} lần — threshold {threshold} reached, không spam PM",
+            "skip_count": skip_count,
+            "threshold": threshold,
+            "posted": False,
+        }
+
+    api = telegram_from_profile(profile)
+    chat_id = chat_id_from_profile(profile)
+    inbox = load_inbox(profile, feature)
+    prefix = message_prefix(profile, feature)
+
+    text = (
+        f"{prefix} STUCK — cần PM/user hỗ trợ\n"
+        f"Screen: {screen_label}\n"
+        f"Reason: {reason}\n\n"
+        f"Options:\n{options}\n\n"
+        "Reply 1 trong:\n"
+        "  • `action: <tap/swipe text>` — agent thực hiện\n"
+        "  • `manual: <hướng dẫn user>` — user thao tác device\n"
+        "  • `skip` hoặc `skip <reason>` — bỏ qua, document gap\n"
+        "  • `abort` hoặc `abort <reason>` — dừng feature"
+    )
+    res = api.send_message(chat_id, text)
+
+    asked_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    # anchor unique per stuck event (không vào graph — chỉ định danh inbox entry)
+    anchor = f"{feature}/stuck/{screen_label}_{int(datetime.now(timezone.utc).timestamp())}"
+    entry = {
+        "message_id": res["message_id"],
+        "anchor": anchor,
+        "gate": GATE_STUCK,
+        "kind": KIND_STUCK_HELP,
+        "screen_label": screen_label,
+        "reason": reason,
+        "options": options,
+        "asked_at": asked_at,
+        "answered": False,
+        "reply_text": None,
+    }
+    inbox["messages"].append(entry)
+    save_inbox(profile, feature, inbox)
+
+    return {
+        "gate": GATE_STUCK,
+        "verdict": "pending",
+        "skip_count": skip_count,
+        "posted": True,
+        "entry": entry,
+    }
+
+
 # ---------------- Ask flow -------------------------------------------------
 
 
@@ -500,6 +666,43 @@ def sync_replies(profile: Profile, feature: str) -> dict[str, Any]:
         if not text:
             ignored.append({"reason": "empty text", "anchor": entry["anchor"]})
             continue
+
+        # stuck_help không có target file — log riêng vào .stuck_log.json
+        if entry["kind"] == KIND_STUCK_HELP:
+            verdict, instruction = parse_stuck_verdict(text)
+            if verdict is None:
+                ignored.append({
+                    "reason": "stuck reply không match format (cần `action: <text>` / `manual: <text>` / `skip` / `abort`)",
+                    "anchor": entry["anchor"],
+                    "got": text[:80],
+                })
+                continue
+            append_stuck_event(
+                profile, feature,
+                screen_label=entry.get("screen_label", "?"),
+                reason=entry.get("reason", ""),
+                options=entry.get("options", ""),
+                verdict=verdict,
+                instruction=instruction,
+                message_id=entry.get("message_id"),
+                asked_at=entry.get("asked_at"),
+            )
+            entry["answered"] = True
+            entry["reply_text"] = text
+            entry["reply_chat_message_id"] = msg.get("message_id")
+            entry["replied_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            entry["verdict"] = verdict
+            entry["instruction"] = instruction
+            folded.append({
+                "anchor": entry["anchor"],
+                "kind": "stuck_help",
+                "verdict": verdict,
+                "instruction": instruction,
+                "screen_label": entry.get("screen_label"),
+            })
+            continue
+
+        # mọi kind khác cần file md để fold
         target = profile.project_root / entry["file"]
         if not target.exists():
             ignored.append({"reason": "target file missing", "anchor": entry["anchor"]})
@@ -628,6 +831,43 @@ def main_ask() -> int:
     print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
     if not result.get("posted") and not result.get("skipped"):
         print("\n(không có Open Question nào để post)", file=sys.stderr)
+    return 0
+
+
+# ---------------- CLI: re-spec-pm-ask-stuck --------------------------------
+
+
+def main_ask_stuck() -> int:
+    ap = argparse.ArgumentParser(
+        description="Post stuck-help message lên Telegram (Phase 3 reset handoff)."
+    )
+    ap.add_argument("feature")
+    ap.add_argument("--screen-label", required=True,
+                    help="label/id của screen đang stuck (vd: modal_v01_paywall)")
+    ap.add_argument("--reason", required=True,
+                    help="lý do stuck (1 câu): vd 'BACK trapped, swipe-down không dismiss'")
+    ap.add_argument("--options", required=True,
+                    help="liệt kê 2-4 option PM có thể chọn, semicolon-separated")
+    args = ap.parse_args()
+
+    try:
+        profile = load_profile()
+        result = ask_stuck_help(
+            profile, args.feature,
+            screen_label=args.screen_label,
+            reason=args.reason,
+            options=args.options,
+        )
+    except SystemExit:
+        raise
+    except (TelegramError, FileNotFoundError, ValueError) as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 1
+
+    print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
+    # exit 3 = auto_skip (PM không cần can thiệp); exit 0 = posted, đợi sync
+    if result.get("verdict") == "auto_skip":
+        return 3
     return 0
 
 

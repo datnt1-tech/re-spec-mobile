@@ -17,5 +17,6 @@ venv/
 # Caches
 .cache/
 
-# Telegram PM bridge runtime state (per-feature inbox mapping)
+# Telegram PM bridge runtime state (per-feature inbox + stuck event log)
 .pm_inbox.json
+.stuck_log.json

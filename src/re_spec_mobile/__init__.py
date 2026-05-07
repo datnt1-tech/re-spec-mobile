@@ -25,6 +25,7 @@ Console entry points (after `pip install`):
     re-spec-paths            — show bundled data file paths
     re-spec-pm-init          — discover Telegram chat_id (one-time setup)
     re-spec-pm-ask           — post Open Question / signoff prompt to Telegram
+    re-spec-pm-ask-stuck     — post stuck-help (Phase 3 reset handoff via Telegram)
     re-spec-pm-sync          — long-poll replies, fold into spec files
 """
 

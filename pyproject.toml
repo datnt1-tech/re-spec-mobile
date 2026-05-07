@@ -73,9 +73,10 @@ re-spec-app-overview     = "re_spec_mobile.app_overview:main"
 # Convenience helpers for accessing bundled data + shell scripts
 re-spec-paths            = "re_spec_mobile.paths:main"
 
-# PM Q&A bridge over Telegram (3 PM gates: scope / coverage / spec)
+# PM Q&A bridge over Telegram (3 PM gates: scope / coverage / spec, + Phase 3 stuck handoff)
 re-spec-pm-init          = "re_spec_mobile.pm_channel:main_init"
 re-spec-pm-ask           = "re_spec_mobile.pm_channel:main_ask"
+re-spec-pm-ask-stuck     = "re_spec_mobile.pm_channel:main_ask_stuck"
 re-spec-pm-sync          = "re_spec_mobile.pm_channel:main_sync"
 
 [project.urls]

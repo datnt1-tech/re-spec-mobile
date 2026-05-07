@@ -249,3 +249,11 @@ properties:
         description: |
           Prefix prepended to every bot message. Substring `<feature>` is
           replaced at send time with the feature slug.
+      stuck_auto_skip_threshold:
+        type: integer
+        default: 3
+        minimum: 1
+        maximum: 10
+        description: |
+          Phase 3 stuck handoff: nếu cùng screen_label đã skip N lần liên tiếp
+          → ask_stuck_help auto-return verdict=auto_skip không spam PM nữa.
