@@ -100,6 +100,10 @@ _(writer paste navigation Mermaid từ spec.md.tmpl §N hoặc mô tả bằng p
 
 #### State
 
+> Syntax dưới dùng Kotlin để gọn — coding agent dịch sang ngôn ngữ target
+> (Swift `struct`, TypeScript `interface`, Dart `class`...) khi rebuild.
+> `?` = nullable, `= <default>` = optional với giá trị mặc định.
+
 ```kotlin
 data class {{ScreenAState}}(
   val loading: Boolean = false,
@@ -146,6 +150,12 @@ _(writer fill: statement ngắn của invariant + lý do quan trọng + cách ve
 ---
 
 ## 6. Data model summary
+
+> Syntax dưới dùng Kotlin `data class` — illustrative cho shape, không phải
+> bắt buộc target Android. Coding agent dịch sang Swift `struct`, TypeScript
+> `interface`, Dart `class`... khi rebuild. `?` = nullable, `= <default>` =
+> optional. Field name + type là contract; method/computed property nếu có
+> sẽ được khai trong §4 Cross-screen invariants hoặc §3 State per-screen.
 
 ### {{ModelClassName}} {#{{feature_slug}}/data_model/{{model_slug}}}
 

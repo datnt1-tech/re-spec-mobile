@@ -403,6 +403,31 @@ related:
 - **API**: dùng ` ```json` với field `$schema`, `type`, `properties` để `extract_contracts.py` parse thành OpenAPI
 - **Data model**: dùng ` ```kotlin` với keyword `data class` để `extract_contracts.py` copy nguyên block sang `spec/_contracts/kotlin/`
 
+### Convention: Kotlin syntax = illustrative, KHÔNG bắt buộc target Android
+
+Layer 3 dùng Kotlin `data class` cho §3 (state class) + §6 (data model) vì 3 lý
+do: gọn, expressive (sealed/nullable explicit), đồng bộ với baseline `bible-agent`
+spec. **Coding agent rebuild trên iOS / TypeScript / Dart / Web tự dịch sang
+target syntax** — không cần regenerate spec.
+
+Mapping nhanh cho coding agent:
+
+| Kotlin | Swift | TypeScript | Dart |
+|---|---|---|---|
+| `data class Foo(val x: String)` | `struct Foo { let x: String }` | `interface Foo { x: string }` | `class Foo { final String x; ... }` |
+| `val x: String?` (nullable) | `let x: String?` | `x?: string` hoặc `x: string \| null` | `String? x` |
+| `val x: Int = 0` (default) | `let x: Int = 0` | `x: number = 0` (constructor default) | `int x = 0` |
+| `List<Verse>` | `[Verse]` | `Verse[]` | `List<Verse>` |
+| `Map<K,V>` | `[K: V]` | `Record<K,V>` | `Map<K,V>` |
+| `sealed class Result { Success(...); Failure(...) }` | `enum Result { case success(...); case failure(...) }` | discriminated union `\| { kind: 'success'; ... } \| { kind: 'failure'; ... }` | sealed class (Dart 3+) |
+
+Method / computed property KHÔNG khai trong block ` ```kotlin``` data class — chỉ
+data shape. Behavior diễn đạt trong §4 Cross-screen invariants hoặc §3 State
+per-screen prose.
+
+Template (`feature_spec.md.tmpl`) đã có hint comment trên block ` ```kotlin```
+nhắc convention này; spec-writer agent giữ hint khi sinh.
+
 ---
 
 ## 6.5. Layer 4 — `<feature>_coverage_report.md` (Gate 2 — capture audit)

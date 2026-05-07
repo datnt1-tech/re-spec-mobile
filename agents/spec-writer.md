@@ -214,13 +214,20 @@ chính xác:
 1. **Metadata** — bảng app/package/version/status
 2. **Tổng Quan** — goal + KPI + flow + metric tracking
 3. **Chi Tiết Từng Screen** — mỗi screen: component render (kèm `reuse_key`
-   nếu shared), state class (Kotlin pseudocode), data dependency, interaction
+   nếu shared), state class (Kotlin pseudocode — **illustrative cho shape,
+   không bắt buộc target Android**), data dependency, interaction. Trước
+   block ` ```kotlin ` đầu tiên trong screen, thêm note 1 dòng nhắc coding
+   agent dịch sang ngôn ngữ target.
 4. **Cross-screen invariant** — invariant phải giữ qua toàn feature
 5. **API contract draft** — mỗi `<METHOD> <path> {#<feature>/api/<name>}` kèm
    1 block fenced JSON Schema (` ```json `) với `$schema`, `type`, `properties`.
    Tool `extract_contracts.py` parse các block này thành OpenAPI sau.
 6. **Data model summary** — mỗi model, 1 block fenced Kotlin `data class`
-   (` ```kotlin `). Cùng tool extract chúng vào `_contracts/kotlin/`.
+   (` ```kotlin `). Cùng tool extract chúng vào `_contracts/kotlin/`. **Quan
+   trọng**: Kotlin syntax là **illustrative** — coding agent rebuild trên
+   iOS/TS/Dart/Web tự dịch (`val x: String?` → optional, `= default` → có
+   default). Đặt note ngắn ở đầu §6 (sau section heading) nếu chưa có sẵn từ
+   template, để người đọc không hiểu nhầm spec là Android-only.
 7. **Open question** — mọi mơ hồ phát hiện. `Q-NN
    {#<feature>/question/q_nn}: <câu hỏi>`. Thà có 10 open question thật còn
    hơn 0 với câu trả lời vẫy tay.
@@ -339,7 +346,8 @@ HOẶC PM duyệt rõ ship kèm open question documented.
   `Class | Bounds | Clickable | Text | Content-desc`.
 - **Mermaid `flowchart TD` (không LR)** mặc định cho nav graph; LR cho state
   machine nếu nhiều branch parallel.
-- **Code fence:** ` ```json ` cho API schema, ` ```kotlin ` cho data model,
+- **Code fence:** ` ```json ` cho API schema, ` ```kotlin ` cho data model
+  (illustrative shape — coding agent dịch sang Swift/TS/Dart khi rebuild),
   ` ```mermaid ` cho diagram. Contract extractor depend cái này.
 
 ## Anti-pattern (KHÔNG làm)
