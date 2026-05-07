@@ -170,6 +170,31 @@ Khi user nói "spec feature X":
    ```
    Exit 0 → tiếp Phase 2. Exit 1 → báo PM đang vướng gì.
 
+#### Telegram bridge (nếu profile có `pm_channel`)
+
+Nếu `.spec-profile.yml` có khai báo `pm_channel.type: telegram`, sau khi sinh
+draft scope.md:
+
+```bash
+re-spec-pm-ask <feature> --gate scope     # post mỗi Open Question lên Telegram
+```
+
+Sau đó loop poll cho tới khi `re-spec-scope --check` xanh:
+
+```bash
+re-spec-pm-sync <feature>                 # long-poll 30s, fold reply → scope.md
+```
+
+`re-spec-pm-sync` exit code:
+- `0` — có reply mới, đã fold vào file
+- `2` — chưa có reply (timeout) — báo user "đợi PM rồi /re-spec-mobile lại"
+- `1` — lỗi config / API
+
+Khi PM trả lời mọi câu trong Telegram → file scope.md tự cập nhật `**PM answer**:`
+inline → PM còn việc cuối: set `status: signed_off` + `signed_off_by/_at` (Telegram
+KHÔNG tự động flip status — PM phải edit file). Lý do: status flip = commit-able
+artifact, cần human review final state, không nên auto từ chat.
+
 #### Trường hợp ngoại lệ — Auto-approve
 
 Skip Gate 1 khi cả:
@@ -279,6 +304,24 @@ khi spec-writer tốn công sinh prose.
    - `sign_off_fail` → loop về Phase 2 với gap/drift action item làm target
      capture mới. Bump `scope_version` nếu PM sửa scope.
 
+#### Telegram bridge (nếu profile có `pm_channel`)
+
+Khác Gate 1: Gate 2 chỉ cần 1 message duy nhất xin PM ký pass/fail.
+
+```bash
+re-spec-pm-ask <feature> --gate coverage   # post tóm tắt §1 Summary + chờ verdict
+re-spec-pm-sync <feature>                  # fold reply (pass/fail) vào frontmatter
+```
+
+PM reply format trong Telegram:
+- `pass <ghi chú ngắn>` → `re-spec-pm-sync` tự set `status: sign_off_pass` +
+  append vào `decisions:` trong frontmatter
+- `fail <lý do>` → set `status: sign_off_fail` + append decision
+
+Reply không bắt đầu bằng `pass`/`fail` bị ignore — PM nhắn lại đúng format.
+Đây là khác biệt duy nhất so với gate khác: gate này tự flip status (an toàn vì
+chỉ có 2 giá trị enum, audit-able qua `decisions:`).
+
 #### Trường hợp ngoại lệ — Auto-approve
 
 Nếu `bypass_scope=true` (feature nhỏ) → skip sinh coverage_report, đi thẳng
@@ -336,6 +379,27 @@ Open Question inline, spec-writer fold câu trả lời vào spec final.
 5. Loop:
    - `remaining_open_questions == 0` → tiếp Phase 6
    - Ngược lại → báo PM "còn N câu, plz answer", loop về bước 1
+
+#### Telegram bridge (nếu profile có `pm_channel`)
+
+Sau khi spec-writer trả về `DONE-PENDING-REVIEW`:
+
+```bash
+re-spec-pm-ask <feature> --gate spec     # post mỗi Q-NN §7 lên Telegram
+```
+
+Loop sync cho tới khi mọi Open Question được PM trả lời:
+
+```bash
+re-spec-pm-sync <feature>                # fold reply → §7
+```
+
+Sau khi `pm-sync` báo `pending_count == 0`, gọi spec-writer mode=revise → writer
+sẽ thấy mọi Q-NN đã có `**PM answer**:` body → fold vào section liên quan
+(§3/§4/§5/§6/§8) → trả `DONE`.
+
+`re-spec-pm-ask --gate spec` idempotent: chạy nhiều lần không repost câu đã
+trong inbox; chỉ post Q-NN mới (khi spec-writer thêm câu mới ở round revise).
 
 #### Trường hợp ngoại lệ — Auto-approve
 
@@ -488,9 +552,66 @@ re-spec-validate
 re-spec-query feature <feature>
 re-spec-query acceptance <feature>
 
+# Telegram PM bridge (3 gate)
+re-spec-pm-init                                  # 1 lần / project — lấy chat_id
+re-spec-pm-ask <feature> --gate scope            # Gate 1: post Open Question
+re-spec-pm-ask <feature> --gate coverage         # Gate 2: post xin pass/fail
+re-spec-pm-ask <feature> --gate spec             # Gate 3: post Open Question §7
+re-spec-pm-sync <feature>                        # poll reply, fold vào file
+
 # MCP server (auto-load qua .mcp.json; register thủ công ở user scope:)
 bash $(re-spec-paths --shell register-mcp-user.sh)
 ```
+
+---
+
+## Telegram PM bridge — setup 1 lần / project
+
+Skill hỗ trợ Q&A 2 chiều với PM qua Telegram cho cả 3 gate. Nếu PM offline /
+không dùng Telegram, skip section này — workflow vẫn chạy được, chỉ là PM phải
+edit file `.md` trực tiếp.
+
+### Setup
+
+```bash
+# 1. Tạo bot qua @BotFather → lấy bot token
+# 2. Export token (KHÔNG commit vào yml)
+export TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+
+# 3. Add bot vào Telegram chat của bạn (DM hoặc group), gửi /start
+
+# 4. Lấy chat_id
+re-spec-pm-init
+# → in ra chat_id, copy paste vào .spec-profile.yml:
+#   pm_channel:
+#     type: telegram
+#     chat_id: <id từ output>
+#     token_env: TELEGRAM_BOT_TOKEN
+
+# 5. Validate
+re-spec-profile --validate
+```
+
+Sau bước này, mỗi gate trong workflow tự động dùng Telegram nếu
+`profile.pm_channel` có giá trị; bỏ qua nếu null/missing.
+
+### Trạng thái persist
+
+Mỗi feature có 1 file `<feature_root>/<feature>/.pm_inbox.json` lưu mapping
+`telegram_message_id ↔ anchor` để `re-spec-pm-sync` biết reply nào fold vào
+chỗ nào. File này **không commit** (đã có trong .gitignore mặc định, hoặc
+add vào nếu chưa có).
+
+### Troubleshooting
+
+| Triệu chứng | Nguyên nhân | Fix |
+|---|---|---|
+| `thiếu bot token` | env var chưa export | `export TELEGRAM_BOT_TOKEN=...` |
+| `getMe HTTP 401` | token sai hoặc revoke | regenerate qua @BotFather |
+| `pm-init` không nhận message | bot chưa được add vào chat / chưa /start | gửi /start lại từ chat |
+| `pm-sync` exit 2 mãi | PM chưa reply hoặc reply không vào message bot | nhắc PM reply đúng message bot (giữ thread) |
+| Coverage reply ignore | text không bắt đầu bằng `pass`/`fail` | nhắc PM format: `pass <reason>` hoặc `fail <reason>` |
+| Reply gone fold sai chỗ | inbox bị xoá giữa chừng | reset `.pm_inbox.json`, chạy lại `pm-ask --force` |
 
 Mọi lệnh `re-spec-*` ở trên được cài bằng `pip install re-spec-mobile` (hoặc
 `bash INSTALL.sh` chạy pip install + symlink luôn skill). Sau khi cài, lệnh

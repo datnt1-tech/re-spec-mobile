@@ -93,3 +93,12 @@ modals:
     # Personal Plan Wizard sheet — KEYCODE_BACK trapped, dismiss only via swipe-down.
     - "v01"
   swipe_down_dismiss: true
+
+# Telegram PM bridge — uncomment + fill chat_id sau khi `re-spec-pm-init`.
+# Token KHÔNG để vào yml; export `TELEGRAM_BOT_TOKEN` trong shell trước khi gọi.
+# pm_channel:
+#   type: telegram
+#   chat_id: -1001234567890
+#   token_env: TELEGRAM_BOT_TOKEN
+#   poll_timeout_s: 30
+#   message_prefix: "[re-spec/<feature>]"

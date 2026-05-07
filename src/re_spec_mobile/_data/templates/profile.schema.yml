@@ -212,3 +212,40 @@ properties:
         type: boolean
         default: true
         description: Allow swipe-down as fallback dismiss for trapped modals.
+
+  pm_channel:
+    type: object
+    additionalProperties: false
+    description: |
+      PM Q&A bridge config. When set, orchestrator can post Open Question /
+      coverage signoff prompts to Telegram and fold PM replies back into spec
+      files via `re-spec-pm-ask` + `re-spec-pm-sync`.
+    required: [type, chat_id]
+    properties:
+      type:
+        type: string
+        enum: [telegram]
+        description: Channel backend. Only `telegram` supported in v1.1.
+      chat_id:
+        type: [string, integer]
+        description: |
+          Telegram chat id (DM, group, or channel). Run `re-spec-pm-init` once
+          to discover the id from a /start message.
+      token_env:
+        type: string
+        default: TELEGRAM_BOT_TOKEN
+        description: |
+          Name of the env var holding the bot token from @BotFather. Token is
+          NEVER read from the YAML file (do not commit secrets).
+      poll_timeout_s:
+        type: integer
+        default: 30
+        minimum: 0
+        maximum: 60
+        description: Long-poll timeout for `getUpdates` (seconds).
+      message_prefix:
+        type: string
+        default: "[re-spec/<feature>]"
+        description: |
+          Prefix prepended to every bot message. Substring `<feature>` is
+          replaced at send time with the feature slug.

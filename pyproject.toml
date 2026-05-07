@@ -72,6 +72,11 @@ re-spec-mcp-server       = "re_spec_mobile.mcp_server:serve"
 # Convenience helpers for accessing bundled data + shell scripts
 re-spec-paths            = "re_spec_mobile.paths:main"
 
+# PM Q&A bridge over Telegram (3 PM gates: scope / coverage / spec)
+re-spec-pm-init          = "re_spec_mobile.pm_channel:main_init"
+re-spec-pm-ask           = "re_spec_mobile.pm_channel:main_ask"
+re-spec-pm-sync          = "re_spec_mobile.pm_channel:main_sync"
+
 [project.urls]
 Documentation = "https://github.com/example/re-spec-mobile/tree/main/docs"
 Source        = "https://github.com/example/re-spec-mobile"

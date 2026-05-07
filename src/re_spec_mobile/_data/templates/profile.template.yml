@@ -75,3 +75,17 @@ capture:
 modals:
   back_traps: []                                  # activities where KEYCODE_BACK is trapped (use swipe-down)
   swipe_down_dismiss: true
+
+# pm_channel — optional. Khi set, orchestrator post Open Question / coverage
+# signoff lên Telegram, PM reply trong chat, `re-spec-pm-sync` fold ngược vào
+# spec file. Setup 1 lần:
+#   1. Tạo bot qua @BotFather → lấy bot token
+#   2. export TELEGRAM_BOT_TOKEN=<token> (KHÔNG commit vào yml)
+#   3. Gửi /start cho bot (DM hoặc add bot vào group)
+#   4. Chạy `re-spec-pm-init` → lấy chat_id, paste vào dưới
+# pm_channel:
+#   type: telegram
+#   chat_id: -1001234567890
+#   token_env: TELEGRAM_BOT_TOKEN
+#   poll_timeout_s: 30
+#   message_prefix: "[re-spec/<feature>]"

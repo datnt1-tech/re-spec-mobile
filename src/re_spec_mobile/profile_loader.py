@@ -156,6 +156,12 @@ class Profile:
     def feature_raw_dir(self, feature: str) -> Path:
         return self.raw_root / feature
 
+    def pm_channel(self) -> dict[str, Any] | None:
+        """Return `pm_channel:` block from raw profile, or None if unset.
+        Consumer (`pm_channel.py`) validates required fields when used."""
+        block = self.raw.get("pm_channel")
+        return block if isinstance(block, dict) and block else None
+
 
 # ---------- discovery + parse ---------------------------------------------
 
