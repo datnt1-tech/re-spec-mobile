@@ -69,6 +69,7 @@ re-spec-validate         = "re_spec_mobile.validate_spec:main"
 re-spec-query            = "re_spec_mobile.spec_query:main"
 re-spec-mcp-server       = "re_spec_mobile.mcp_server:serve"
 re-spec-app-overview     = "re_spec_mobile.app_overview:main"
+re-spec-pm-doc-lint      = "re_spec_mobile.pm_doc_lint:main"
 
 # Convenience helpers for accessing bundled data + shell scripts
 re-spec-paths            = "re_spec_mobile.paths:main"
