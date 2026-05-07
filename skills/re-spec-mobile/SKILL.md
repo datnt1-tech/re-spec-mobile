@@ -87,6 +87,7 @@ Phase 5   Viết draft spec (agent spec-writer, mode=draft)
 Phase 5.5 ━━━ GATE 3: Spec review loop ━━━━━━━━ PM trả lời open question inline
 Phase 6   Rebuild + validate spec graph
 Phase 7   Commit (thủ công)
+Phase 8   App overview synthesis (chạy sau ≥2 feature, không gate, idempotent)
 ```
 
 
@@ -430,6 +431,50 @@ add <feature> feature specification document for implementation
 Cho session lớn: kèm scope tag (`feat(spec):`, `chore(spec):`) và liệt kê các
 phase đã chạy.
 
+### Phase 8 — App overview synthesis (1 lần / app, idempotent rerun)
+
+Sau khi ≥ 2 feature đã commit (Phase 7), sinh / refresh doc tổng app-level
+**platform-agnostic** dùng được cho cả iOS rebuild + stake-holder không kỹ thuật.
+
+```bash
+re-spec-build-graph                  # đảm bảo graph fresh
+re-spec-app-overview                 # render/refresh <spec_root>/app_overview.md
+```
+
+Doc gồm 10 section auto-generated (sitemap, cross-feature nav, **component
+reuse map** = ứng viên design system, API surface, ...) + 5 section prose
+designer/PM viết (mục tiêu sản phẩm, UX state pattern, navigation model abstract,
+content rules, cross-cutting decisions).
+
+#### Idempotent re-render
+
+Auto section bọc trong HTML marker `<!-- AUTO:KEY START/END -->`. Mỗi lần
+chạy lại `re-spec-app-overview`:
+- Marker block: refresh từ graph mới
+- Prose ngoài marker: **preserve nguyên** (không bao giờ overwrite)
+
+Nghĩa là designer chỉ viết prose 1 lần; mỗi feature mới add → rerun để cập nhật
+inventory + sitemap mà không mất prose cũ.
+
+#### Linter platform-agnostic
+
+```bash
+re-spec-app-overview --check         # exit 1 nếu có forbidden token
+```
+
+Flag warning khi gặp `Compose / Kotlin / @Composable / Activity / Fragment /
+SwiftUI / UIView / Storyboard / ...` ngoài code fence. Mục đích: doc dùng cho
+cả 2 platform → KHÔNG đề cập framework cụ thể.
+
+Mode default (không `--check`): chạy luôn lint, warn ra stderr, không block.
+Mode `--strict` (CI): exit 1 nếu có warning.
+
+#### Không gate
+
+Khác Phase 1.5/4.5/5.5, Phase 8 KHÔNG có PM gate cứng. PM/designer review tự
+do, commit khi hài lòng. Lý do: doc này iterate liên tục theo sản phẩm, gate
+cứng = friction không cần thiết.
+
 ---
 
 ## Checklist tự verify 60-giây (chạy đầu mỗi session)
@@ -551,6 +596,11 @@ re-spec-build-graph --stats
 re-spec-validate
 re-spec-query feature <feature>
 re-spec-query acceptance <feature>
+
+# App-level overview (Phase 8 — platform-agnostic)
+re-spec-app-overview                             # render/refresh spec/app_overview.md
+re-spec-app-overview --check                    # lint platform-specific tokens
+re-spec-app-overview --section REUSE_MAP        # debug: 1 section ra stdout
 
 # Telegram PM bridge (3 gate)
 re-spec-pm-init                                  # 1 lần / project — lấy chat_id

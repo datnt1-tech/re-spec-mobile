@@ -21,6 +21,7 @@ Console entry points (after `pip install`):
     re-spec-validate         — validate spec frontmatter
     re-spec-query            — query spec graph
     re-spec-mcp-server       — JSON-RPC MCP server
+    re-spec-app-overview     — render/refresh app-level platform-agnostic overview
     re-spec-paths            — show bundled data file paths
     re-spec-pm-init          — discover Telegram chat_id (one-time setup)
     re-spec-pm-ask           — post Open Question / signoff prompt to Telegram

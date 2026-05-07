@@ -113,9 +113,20 @@ Workflow Phase ↔ Layer mapping:
 | 5 | `observations` | `<feature>_observations.md` | spec-writer agent |
 | 5 | `flow` | `<feature>_spec.md` | spec-writer agent |
 | 5 | `implementation` | `<feature>_feature_spec.md` | spec-writer agent |
-| — | `overview` | `app_overview_spec.md` | manual cross-cluster doc |
+| 8 | `app_overview` | `<spec_root>/app_overview.md` | `re-spec-app-overview` (auto) + designer/PM (prose) |
+| — | `overview` | `app_overview_spec.md` (legacy) | manual cross-cluster doc |
 
-**Layer `overview`** = cross-cluster document (vd `app_overview_spec.md`). Feature = `app`. Body không bắt buộc 9-section structure. Chủ yếu chứa `references` tới các feature spec khác.
+**Layer `app_overview`** = 1 file/app duy nhất ở `<spec_root>/app_overview.md`,
+**platform-agnostic** (dùng cho cả iOS rebuild). 10 section auto-generated từ
+graph (sitemap, reuse map, API surface...) + 5 section prose (UX pattern,
+navigation model, content rules...). Idempotent re-render qua HTML marker
+`<!-- AUTO:KEY START/END -->`. Anchor root: `app/overview/root`. KHÔNG cần PM
+gate riêng — review tự do.
+
+**Layer `overview`** (legacy) = cross-cluster document cũ (vd `app_overview_spec.md`).
+Feature = `app`. Body không bắt buộc 9-section structure. Chủ yếu chứa
+`references` tới các feature spec khác. Vẫn support cho back-compat; project mới
+dùng `app_overview` (no `_spec` suffix) generated qua `re-spec-app-overview`.
 
 ---
 
