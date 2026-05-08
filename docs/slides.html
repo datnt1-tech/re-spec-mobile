@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>re-spec-mobile — Spec-first RE Toolkit</title>
+<style>
+  :root {
+    --bg: #0a0f0d;
+    --surface: #131d18;
+    --surface-2: #1a2620;
+    --border: #1f2e26;
+    --green: #10b981;
+    --green-bright: #34d399;
+    --green-glow: #6ee7b7;
+    --green-dim: #047857;
+    --text: #e5e7eb;
+    --text-dim: #9ca3af;
+    --text-faint: #6b7280;
+    --code-bg: #0f1612;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(52, 211, 153, 0.05) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .deck { position: relative; width: 100vw; height: 100vh; z-index: 1; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    padding: 5vh 8vw;
+    flex-direction: column;
+    justify-content: center;
+    overflow-y: auto;
+    animation: fadeIn 0.4s ease;
+  }
+  .slide.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Typography */
+  h1 {
+    font-size: clamp(2rem, 4.5vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--green-bright);
+    margin-bottom: 0.5em;
+    text-shadow: 0 0 30px rgba(52, 211, 153, 0.3);
+  }
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 0.8em;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-size: clamp(1.1rem, 1.6vw, 1.4rem);
+    font-weight: 600;
+    color: var(--green-glow);
+    margin-bottom: 0.5em;
+  }
+  p, li { font-size: clamp(0.95rem, 1.2vw, 1.1rem); line-height: 1.6; color: var(--text); }
+  .lead { font-size: clamp(1.1rem, 1.5vw, 1.4rem); color: var(--text-dim); margin-bottom: 1.5em; }
+  strong { color: var(--green-bright); font-weight: 700; }
+  code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    color: var(--green-glow);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+    border: 1px solid var(--border);
+  }
+
+  /* Layout helpers */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 1rem;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: var(--green-dim);
+  }
+  .card-title {
+    color: var(--green-bright);
+    font-weight: 700;
+    font-size: 1.1em;
+    margin-bottom: 0.5em;
+  }
+
+  ul, ol { padding-left: 1.5em; margin-bottom: 1em; }
+  li { margin-bottom: 0.5em; }
+  li::marker { color: var(--green); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    background: var(--surface);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95em;
+  }
+  th {
+    background: var(--surface-2);
+    color: var(--green);
+    font-weight: 600;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  pre .green { color: var(--green-bright); }
+  pre .dim { color: var(--text-faint); }
+  pre .accent { color: var(--green-glow); font-weight: 600; }
+
+  /* Tag / Badge */
+  .tag {
+    display: inline-block;
+    padding: 0.2em 0.7em;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--green-bright);
+    border: 1px solid var(--green-dim);
+    border-radius: 999px;
+    font-size: 0.8em;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-right: 0.5em;
+  }
+  .tag.warn {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--warning);
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+
+  /* Title slide */
+  .title-slide {
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+  }
+  .title-slide h1 {
+    font-size: clamp(3rem, 6vw, 5rem);
+    background: linear-gradient(135deg, var(--green-glow), var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    margin-bottom: 0.3em;
+  }
+  .title-slide .tagline {
+    font-size: clamp(1.2rem, 2vw, 1.6rem);
+    color: var(--text-dim);
+    margin-bottom: 2em;
+    max-width: 800px;
+  }
+  .title-slide .meta { color: var(--text-faint); font-size: 0.95rem; }
+
+  /* Workflow diagram */
+  .workflow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 1rem 0;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 0.95em;
+  }
+  .phase {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border-left: 3px solid var(--border);
+    border-radius: 0 6px 6px 0;
+  }
+  .phase.gate {
+    border-left-color: var(--green);
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) 0%, var(--surface) 100%);
+  }
+  .phase-num {
+    color: var(--text-faint);
+    font-weight: 700;
+    min-width: 60px;
+  }
+  .phase.gate .phase-num { color: var(--green-bright); }
+  .phase-title { flex: 1; color: var(--text); }
+  .phase.gate .phase-title { color: var(--green-glow); font-weight: 600; }
+  .phase-tag { font-size: 0.85em; color: var(--text-dim); }
+
+  /* Stats */
+  .stat {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .stat-num {
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 800;
+    color: var(--green-bright);
+    line-height: 1;
+    margin-bottom: 0.3em;
+    text-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
+  }
+  .stat-label {
+    color: var(--text-dim);
+    font-size: 0.95em;
+  }
+
+  /* Layer cards */
+  .layer-row {
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+    margin: 0.6rem 0;
+  }
+  .layer-num {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--green-dim);
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .layer-body {
+    flex: 1;
+    background: var(--surface);
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    border-left: 3px solid var(--green);
+  }
+  .layer-name { color: var(--green-bright); font-weight: 700; font-size: 1.05em; }
+  .layer-desc { color: var(--text-dim); font-size: 0.9em; margin-top: 0.2em; }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 2rem;
+    z-index: 100;
+    color: var(--text-faint);
+    font-family: 'SF Mono', monospace;
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+  }
+  .nav button {
+    background: transparent;
+    border: none;
+    color: var(--green);
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 0 0.3em;
+    transition: color 0.15s;
+  }
+  .nav button:hover { color: var(--green-glow); }
+  .nav .counter { color: var(--text); font-weight: 600; }
+
+  .hint {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 2rem;
+    color: var(--text-faint);
+    font-size: 0.8em;
+    font-family: 'SF Mono', monospace;
+  }
+  .hint kbd {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    font-size: 0.85em;
+  }
+
+  /* Section header */
+  .section-header {
+    color: var(--text-faint);
+    font-size: 0.85em;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5em;
+  }
+
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.05));
+    border: 1px solid var(--green-dim);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .danger-box {
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  .danger-box h3 { color: var(--danger); }
+
+  /* Print */
+  @media print {
+    .slide { display: flex !important; page-break-after: always; height: 100vh; }
+    .nav, .hint { display: none; }
+  }
+
+  /* Smaller screens */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .slide { padding: 4vh 5vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide active">
+    <h1>re-spec-mobile</h1>
+    <p class="tagline">Spec-first reverse-engineering toolkit cho Android.<br>Capture mọi screen → sinh spec markdown 5-layer → handoff coding agent rebuild.</p>
+    <div>
+      <span class="tag">Python 3.10+</span>
+      <span class="tag">19 CLI</span>
+      <span class="tag">11 phase / 3 PM gate</span>
+      <span class="tag">Telegram bridge</span>
+    </div>
+    <p class="meta" style="margin-top: 3em;">v1.1 → v1.2 — 2026-05</p>
+  </div>
+
+  <!-- Slide 2: Vấn đề -->
+  <div class="slide">
+    <div class="section-header">Vấn đề</div>
+    <h2>3 nỗi đau khi RE / spec app cho team</h2>
+    <p class="lead">Doc PM truyền thống không scale được khi handoff cho dev / coding agent rebuild.</p>
+
+    <div class="grid-3" style="margin-top: 1.5rem;">
+      <div class="card">
+        <div class="card-title">🛠️ Cách cũ — manual</div>
+        <ul>
+          <li>Screenshot tay từng màn</li>
+          <li>Note Excel / Notion rời rạc</li>
+          <li>Không trace được flow đầy đủ</li>
+          <li><strong>1 dev rebuild = 1 tháng disagreement</strong></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 PM ↔ AI scope drift</div>
+        <ul>
+          <li><strong>AI capture cái nó nghĩ</strong>, không phải cái PM muốn</li>
+          <li>Stuck dead-end → không ai biết để giúp</li>
+          <li>Spec chỉ 1 platform → iOS xin lỗi đọc lại</li>
+          <li>Không có structured review → drift triền miên</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color: rgba(245, 158, 11, 0.4);">
+        <div class="card-title" style="color: var(--warning);">🤖 Doc cũ ≠ machine-readable</div>
+        <ul>
+          <li><strong>Coding agent grep mò</strong>, đọc 50 trang prose tự do</li>
+          <li>Không anchor → không cross-link giữa screen / API / data model</li>
+          <li>AC viết "AI gửi tin ngắn gọn" → không gen test được</li>
+          <li>Không có index → search bằng substring + may rủi</li>
+          <li><strong>Spec không live cùng code</strong> → drift theo thời gian</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Giải pháp -->
+  <div class="slide">
+    <div class="section-header">Giải pháp</div>
+    <h2>Spec markdown structured + queryable graph + PM-in-the-loop</h2>
+
+    <div class="highlight-box">
+      <p style="font-size: 1.1em;">Drive 1 device Android, capture mọi screen, sinh ra <strong>5 file markdown / feature</strong> + <strong>1 graph JSON queryable</strong> + <strong>1 doc tổng app-level platform-agnostic</strong>. Engineer + coding agent rebuild được trên cả iOS / Android không cần chạy app gốc.</p>
+    </div>
+
+    <div class="grid-2" style="margin-top: 1.5rem;">
+      <div class="card">
+        <div class="card-title">⚙️ App-agnostic</div>
+        <p>Mọi giá trị đặc thù app (package, viewport, blocklist, tabs) ở <code>.spec-profile.yml</code>. 1 toolkit dùng cho mọi app — config-driven, không hard-code.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">👥 PM-driven, async</div>
+        <p>3 PM gate (scope / coverage / spec Q&A) chặn AI trượt. Telegram bridge cho PM review remote. Stuck handoff không treo.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🌐 Cross-platform</div>
+        <p>Layer 5 platform-agnostic (linter cấm <code>Compose</code>, <code>SwiftUI</code>...). Layer 3 Kotlin = illustrative — coding agent dịch sang Swift/TS/Dart.</p>
+      </div>
+      <div class="card" style="border-color: var(--green-dim);">
+        <div class="card-title" style="color: var(--green-bright);">🤖 Agent-queryable spec graph</div>
+        <p>Spec graph JSON (<strong>nodes + edges + index</strong>) + <strong>MCP server 8 tool</strong> (<code>spec_path</code>, <code>spec_search</code>, <code>spec_reuses</code>...). Coding agent <strong>query precise</strong>, không grep mò 50 trang md.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: Architecture -->
+  <div class="slide">
+    <div class="section-header">Kiến trúc</div>
+    <h2>3 bucket — 3 cơ chế cài đặt</h2>
+
+<pre><span class="accent">src/re_spec_mobile/</span>          ← <span class="green">PIP install</span> (Python package)
+  ├── *.py                    16 modules — actual code
+  └── _data/                  Bundled via package_data + importlib.resources
+      ├── templates/          8 .tmpl files
+      ├── canonical/          6 reference samples
+      └── _shell/             3 shell scripts
+
+<span class="accent">skills/re-spec-mobile/</span>       ← <span class="green">SYMLINK</span> to ~/.claude/skills/
+  └── SKILL.md               <span class="dim">11-phase orchestrator + 3 PM gate</span>
+
+<span class="accent">agents/</span>                      ← <span class="green">SYMLINK</span> to ~/.claude/agents/
+  ├── app-explorer.md        <span class="dim">Sub-agent: device capture (sonnet)</span>
+  └── spec-writer.md         <span class="dim">Sub-agent: prose generation (opus)</span></pre>
+
+    <p style="margin-top: 1rem;"><strong>Rule</strong>: <code>src/</code> là single source of truth. Skill + agents là entry point cho Claude Code. Không duplicate template/canonical.</p>
+  </div>
+
+  <!-- Slide 5: Layer 0/1/2 — Capture & Observe -->
+  <div class="slide">
+    <div class="section-header">Output · Phase capture & observe</div>
+    <h2>Layer 0/1/2 — Foundation (PM contract → raw → flow)</h2>
+
+    <div class="grid-3" style="margin-top: 1.5rem;">
+      <div class="card">
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4em;">
+          <span style="font-size: 2rem; font-weight: 800; color: var(--green-dim);">0</span>
+          <div>
+            <div style="color: var(--green-bright); font-weight: 700; font-size: 1em;"><code>scope.md</code></div>
+            <div style="font-size: 0.85em; color: var(--text-dim);">PM contract</div>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.5em;">
+          <span class="tag">PM viết</span>
+          <span class="tag">Phase 1.5</span>
+        </div>
+        <p style="font-size: 0.92em;">PM chốt scope <strong>TRƯỚC khi capture</strong>. Chặn AI capture trượt cluster.</p>
+        <ul style="font-size: 0.88em; padding-left: 1.2em;">
+          <li><code>clusters[]</code>: must_visit / optional / out_of_scope</li>
+          <li><code>questions[]</code>: PM unknowns cần answer</li>
+          <li><code>acceptance_capture[]</code>: criteria capture phase done</li>
+          <li><code>status</code>: <code>draft → signed_off</code></li>
+        </ul>
+        <p style="color: var(--green); font-size: 0.85em; margin-top: 0.5em;">→ app-explorer agent đọc trước khi start.</p>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4em;">
+          <span style="font-size: 2rem; font-weight: 800; color: var(--green-dim);">1</span>
+          <div>
+            <div style="color: var(--green-bright); font-weight: 700; font-size: 1em;"><code>observations.md</code></div>
+            <div style="font-size: 0.85em; color: var(--text-dim);">UI behavior raw</div>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.5em;">
+          <span class="tag">spec-writer</span>
+          <span class="tag">Phase 5</span>
+        </div>
+        <p style="font-size: 0.92em;"><strong>Transcript per-screen</strong> chính xác (verbatim) — engineer infer được behavior không cần chạy app.</p>
+        <ul style="font-size: 0.88em; padding-left: 1.2em;">
+          <li>Bảng bounds 5 cột: <code>Class | Bounds | Clickable | Text | Content-desc</code></li>
+          <li>Sticky vs scrollable region (đọc bounds qua các capture <code>_a/_b/_c</code>)</li>
+          <li>No-op silent (tap trông tương tác nhưng không sinh nav)</li>
+          <li>Animation / hero shared element / variant A/B</li>
+          <li>Accessibility trap (Compose Popup invisible với a11y)</li>
+        </ul>
+        <p style="color: var(--green); font-size: 0.85em; margin-top: 0.5em;">→ Layer 2 + 3 build trên đây.</p>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4em;">
+          <span style="font-size: 2rem; font-weight: 800; color: var(--green-dim);">2</span>
+          <div>
+            <div style="color: var(--green-bright); font-weight: 700; font-size: 1em;"><code>spec.md</code></div>
+            <div style="font-size: 0.85em; color: var(--text-dim);">Flow + state machine</div>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.5em;">
+          <span class="tag">spec-writer</span>
+          <span class="tag">Phase 5</span>
+        </div>
+        <p style="font-size: 0.92em;"><strong>Block-level structure</strong> — 5-15 block/feature, mỗi block = cluster screen cùng functional purpose.</p>
+        <ul style="font-size: 0.88em; padding-left: 1.2em;">
+          <li><code>blocks[]</code> A, B, C... với screens membership</li>
+          <li><code>nav_edges[]</code> intra + cross-feature (<code>external: true</code>)</li>
+          <li>Mermaid <code>flowchart TD</code> nav graph</li>
+          <li>State machine (Mermaid <code>stateDiagram-v2</code>) cho lifecycle</li>
+          <li>Bug/quirk đã observe — reproducible step</li>
+        </ul>
+        <p style="color: var(--green); font-size: 0.85em; margin-top: 0.5em;">→ Engineer hiểu structure ở mức flow.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Layer 3/4/5 — Implementation & Overview -->
+  <div class="slide">
+    <div class="section-header">Output · Phase implementation & overview</div>
+    <h2>Layer 3/4/5 — Contract → Audit → Cross-platform overview</h2>
+
+    <div class="grid-3" style="margin-top: 1.5rem;">
+      <div class="card" style="border-color: var(--green-dim);">
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4em;">
+          <span style="font-size: 2rem; font-weight: 800; color: var(--green-bright);">3</span>
+          <div>
+            <div style="color: var(--green-bright); font-weight: 700; font-size: 1em;"><code>feature_spec.md</code> ★</div>
+            <div style="font-size: 0.85em; color: var(--text-dim);">Implementation contract</div>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.5em;">
+          <span class="tag">spec-writer</span>
+          <span class="tag">Phase 5</span>
+        </div>
+        <p style="font-size: 0.92em;"><strong>9 section chuẩn</strong> — file engineer/coding agent đọc để rebuild app.</p>
+        <ul style="font-size: 0.85em; padding-left: 1.2em;">
+          <li>§1 Metadata · §2 Tổng quan + KPI + metrics</li>
+          <li>§3 Per-screen: state class, components, data dep</li>
+          <li>§4 Cross-screen invariants</li>
+          <li>§5 API contract <strong>JSON Schema</strong></li>
+          <li>§6 Data model Kotlin (<em>illustrative</em>, agent dịch)</li>
+          <li>§7 Open Q · §8 AC <strong>measurable</strong> · §9 Refs</li>
+        </ul>
+        <p style="color: var(--green); font-size: 0.85em; margin-top: 0.5em;">→ Coding agent (Claude Code/Cursor) rebuild iOS+Android.</p>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4em;">
+          <span style="font-size: 2rem; font-weight: 800; color: var(--green-dim);">4</span>
+          <div>
+            <div style="color: var(--green-bright); font-weight: 700; font-size: 1em;"><code>coverage_report.md</code></div>
+            <div style="font-size: 0.85em; color: var(--text-dim);">Capture audit</div>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.5em;">
+          <span class="tag">auto + PM</span>
+          <span class="tag">Phase 4.5</span>
+        </div>
+        <p style="font-size: 0.92em;"><strong>Auto-diff scope.md vs nav_graph thực tế</strong>. PM gate trước khi spec-writer chạy.</p>
+        <ul style="font-size: 0.88em; padding-left: 1.2em;">
+          <li><code>captured[]</code>: anchor đã capture đủ</li>
+          <li><code>gaps[]</code>: in scope nhưng MISS capture</li>
+          <li><code>drift[]</code>: capture nhưng OUT-of-scope</li>
+          <li><code>decisions[]</code>: PM action item</li>
+          <li><code>status</code>: <code>draft → sign_off_pass | sign_off_fail</code></li>
+        </ul>
+        <p style="color: var(--green); font-size: 0.85em; margin-top: 0.5em;">→ Telegram bridge: PM reply <code>pass/fail &lt;reason&gt;</code> tự flip.</p>
+      </div>
+
+      <div class="card" style="border-color: var(--green-bright);">
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4em;">
+          <span style="font-size: 2rem; font-weight: 800; color: var(--green-bright); text-shadow: 0 0 12px var(--green-glow);">5</span>
+          <div>
+            <div style="color: var(--green-glow); font-weight: 700; font-size: 1em;"><code>app_overview.md</code> ★</div>
+            <div style="font-size: 0.85em; color: var(--text-dim);">Cross-feature platform-agnostic</div>
+          </div>
+        </div>
+        <div style="margin-bottom: 0.5em;">
+          <span class="tag">auto + designer</span>
+          <span class="tag">Phase 8</span>
+        </div>
+        <p style="font-size: 0.92em;"><strong>1 file/app duy nhất</strong> — dùng cho cả iOS rebuild + non-tech stakeholder. Idempotent rerun preserve prose.</p>
+        <ul style="font-size: 0.85em; padding-left: 1.2em;">
+          <li><strong>10 auto section</strong> (HTML marker): IDENTITY / INVENTORY / SITEMAP / CROSS_NAV / <strong>REUSE_MAP</strong> / API_SURFACE / DATA_MODELS / INVARIANTS / OPEN_QUESTIONS / ACCEPTANCE</li>
+          <li><strong>5 prose section</strong>: A mục tiêu · B navigation model · C UX state pattern · D content rules · E cross-cutting decisions</li>
+          <li>Linter cấm <code>Compose / SwiftUI / Activity / Storyboard</code> ngoài code fence</li>
+        </ul>
+        <p style="color: var(--green); font-size: 0.85em; margin-top: 0.5em;">→ Design agent (Stitch/Claude Design) input + iOS team rebuild.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Workflow -->
+  <div class="slide">
+    <div class="section-header">Workflow</div>
+    <h2>11 phase, 3 PM gate, Telegram-aware</h2>
+
+    <div class="workflow">
+      <div class="phase"><span class="phase-num">Phase 0</span><span class="phase-title">Bootstrap</span><span class="phase-tag">re-spec-init</span></div>
+      <div class="phase"><span class="phase-num">Phase 1</span><span class="phase-title">Kickoff</span></div>
+      <div class="phase gate"><span class="phase-num">Gate 1</span><span class="phase-title">Scope contract sign-off</span><span class="phase-tag">📨 Telegram-aware</span></div>
+      <div class="phase"><span class="phase-num">Phase 2</span><span class="phase-title">Capture loop → app-explorer agent</span></div>
+      <div class="phase gate"><span class="phase-num">Phase 3</span><span class="phase-title">Stuck handoff (4 verdict: action / manual / skip / abort)</span><span class="phase-tag">📨 Telegram-aware</span></div>
+      <div class="phase"><span class="phase-num">Phase 4</span><span class="phase-title">Coverage check</span></div>
+      <div class="phase gate"><span class="phase-num">Gate 2</span><span class="phase-title">Coverage report sign-off (pass / fail)</span><span class="phase-tag">📨 Telegram-aware</span></div>
+      <div class="phase"><span class="phase-num">Phase 5</span><span class="phase-title">Spec writing → spec-writer agent</span></div>
+      <div class="phase gate"><span class="phase-num">Gate 3</span><span class="phase-title">Open Question §7 review</span><span class="phase-tag">📨 Telegram-aware</span></div>
+      <div class="phase"><span class="phase-num">Phase 6</span><span class="phase-title">Build graph + validate</span></div>
+      <div class="phase"><span class="phase-num">Phase 7</span><span class="phase-title">Commit (thủ công)</span></div>
+      <div class="phase"><span class="phase-num">Phase 8</span><span class="phase-title">App overview synthesis (≥2 feature, idempotent rerun)</span></div>
+    </div>
+  </div>
+
+  <!-- Slide 8: Spec Graph + MCP -->
+  <div class="slide">
+    <div class="section-header">Differentiator chính</div>
+    <h2>Spec graph — query, không grep</h2>
+    <p class="lead">Phase 6 parse YAML frontmatter của 5 layer → emit graph JSON deterministic. MCP server expose 8 tool query qua stdio JSON-RPC. Coding agent gọi API thay vì <code>grep -r</code>.</p>
+
+<pre><span class="dim"># 5 layer markdown</span>
+spec/feature/<span class="accent">&lt;feature&gt;</span>/{scope, observations, spec, feature_spec, coverage_report}.md
+                              <span class="green">↓</span> re-spec-build-graph
+spec/_graph/
+  ├── <span class="accent">nodes.json</span>   <span class="dim">11 type: feature / screen / block / component / api /</span>
+  │                <span class="dim">data_model / criterion / invariant / question / state / cluster</span>
+  ├── <span class="accent">edges.json</span>   <span class="dim">9 type: navigates_to / renders_component / reuses_component /</span>
+  │                <span class="dim">returns_model / belongs_to_feature / references / ...</span>
+  └── <span class="accent">index.json</span>   <span class="dim">fast lookup: anchor → {type, feature, file, line, label}</span>
+                              <span class="green">↓</span> re-spec-mcp-server (stdio JSON-RPC)
+<span class="green">Claude Code / Cursor / coding agent</span>      <span class="dim"># 8 tool query</span></pre>
+
+    <div class="grid-2" style="margin-top: 1rem;">
+      <div>
+        <h3>8 tool MCP query</h3>
+        <table>
+          <thead><tr><th>Tool</th><th>Use case</th></tr></thead>
+          <tbody>
+            <tr><td><code>spec_show</code></td><td>Node detail + in/out edges + file:line</td></tr>
+            <tr><td><code>spec_list</code></td><td>List nodes của 1 type</td></tr>
+            <tr><td><code>spec_feature</code></td><td>Summary feature (counts + children)</td></tr>
+            <tr><td><code>spec_reuses</code></td><td>Component shared cross-feature</td></tr>
+            <tr><td><code>spec_path</code></td><td>BFS shortest nav giữa 2 screen</td></tr>
+            <tr><td><code>spec_acceptance</code></td><td>Mọi AC của feature</td></tr>
+            <tr><td><code>spec_search</code></td><td>Substring match anchor + label</td></tr>
+            <tr><td><code>spec_stats</code></td><td>Graph totals</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Coding agent rebuild iOS — query gì?</h3>
+        <pre style="font-size: 0.8em;"><span class="dim"># "Tap 'Continue' từ landing đi đâu?"</span>
+spec_path(<span class="accent">"auth/screen/landing"</span>,
+          <span class="accent">"today/screen/detail"</span>)
+
+<span class="dim"># "Component nào reuse cross-feature?"</span>
+spec_reuses()  <span class="green">→ session_reader, day_card</span>
+
+<span class="dim"># "Mọi AC measurable của today?"</span>
+spec_acceptance(<span class="accent">"today"</span>)
+
+<span class="dim"># "Endpoint nào chạy lúc render landing?"</span>
+spec_show(<span class="accent">"today/screen/landing"</span>)
+  <span class="green">→ outgoing edges renders_component, calls_api</span></pre>
+        <p style="color: var(--green-bright); margin-top: 0.5em;">⚙️ MCP server <strong>auto-rebuild khi md mtime mới hơn</strong> — luôn fresh, không cần manual refresh.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 9: Telegram bridge -->
+  <div class="slide">
+    <div class="section-header">PM Async Review</div>
+    <h2>Telegram bridge — Q&A 2 chiều</h2>
+    <p class="lead">Module <code>pm_channel.py</code> stdlib-only (~700 dòng, zero new dep). PM trả lời trong chat, tool fold ngược vào file.</p>
+
+    <table>
+      <thead>
+        <tr><th>Kind</th><th>Khi nào</th><th>Reply format</th><th>Fold target</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>question</code></td>
+          <td>Gate 1, Gate 3</td>
+          <td>Text tự do</td>
+          <td><code>**PM answer**:</code> dưới <code>{#&lt;anchor&gt;}</code></td>
+        </tr>
+        <tr>
+          <td><code>coverage_signoff</code></td>
+          <td>Gate 2</td>
+          <td><code>pass &lt;r&gt;</code> / <code>fail &lt;r&gt;</code></td>
+          <td>Flip <code>status:</code> + append <code>decisions:</code></td>
+        </tr>
+        <tr>
+          <td><code>stuck_help</code></td>
+          <td>Phase 3</td>
+          <td><code>action:</code> / <code>manual:</code> / <code>skip</code> / <code>abort</code></td>
+          <td><code>.stuck_log.json</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="grid-2" style="margin-top: 1rem;">
+      <div class="card">
+        <div class="card-title">🔒 Auth model</div>
+        <p>Token đọc từ env <code>TELEGRAM_BOT_TOKEN</code>, chat_id trong profile. <strong>Token không bao giờ vào yml</strong>.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">⚡ Auto-skip threshold</div>
+        <p>Cùng screen stuck ≥ 3 lần → auto verdict <code>auto_skip</code>, không spam PM. Config qua profile.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: App overview -->
+  <div class="slide">
+    <div class="section-header">Layer 5 — Cross-cutting</div>
+    <h2>App overview platform-agnostic</h2>
+    <p class="lead">1 doc / app, dùng được cho cả iOS rebuild + stake-holder không kỹ thuật.</p>
+
+    <div class="grid-2">
+      <div>
+        <h3>10 auto section (từ graph)</h3>
+        <ul>
+          <li><strong>IDENTITY</strong> — app metadata</li>
+          <li><strong>INVENTORY</strong> — feature × counts table</li>
+          <li><strong>SITEMAP</strong> — mọi screen, group by feature</li>
+          <li><strong>CROSS_NAV</strong> — Mermaid edge external</li>
+          <li><strong>REUSE_MAP</strong> 🌟 — auto-detect ứng viên design system</li>
+          <li><strong>API_SURFACE</strong> — mọi endpoint</li>
+          <li>DATA_MODELS / INVARIANTS / OPEN_QUESTIONS / ACCEPTANCE</li>
+        </ul>
+      </div>
+      <div>
+        <h3>5 prose section (designer/PM viết)</h3>
+        <ul>
+          <li><strong>A</strong>. Mục tiêu sản phẩm + KPI</li>
+          <li><strong>B</strong>. Navigation model abstract</li>
+          <li><strong>C</strong>. UX state pattern (empty/loading/error/paywall)</li>
+          <li><strong>D</strong>. Content / copy rules</li>
+          <li><strong>E</strong>. Cross-cutting design decisions</li>
+        </ul>
+        <p style="color: var(--green-bright); margin-top: 1rem;">⚙️ Idempotent rerun: prose preserve qua HTML marker</p>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="margin-top: 1.5rem;">
+      <strong>Linter platform-agnostic</strong>: warn khi gặp <code>Compose</code>, <code>SwiftUI</code>, <code>UIView</code>, <code>Activity</code>, <code>Storyboard</code>... ngoài code fence. <code>--strict</code> exit 1 cho CI.
+    </div>
+  </div>
+
+  <!-- Slide 11: PM doc lint -->
+  <div class="slide">
+    <div class="section-header">Bonus tool</div>
+    <h2>PM doc linter — apply technique cho doc PM bất kỳ</h2>
+    <p class="lead">Module <code>pm_doc_lint.py</code>. Không bind structure 9-section feature_spec — apply cho doc PM tự viết.</p>
+
+    <table>
+      <thead>
+        <tr><th>Check</th><th>Trigger</th><th>Ví dụ flag</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>ANCHOR</code></td><td><code>{#...}</code> không snake_case</td><td><code>{#FEATURE/Screen/x}</code></td></tr>
+        <tr><td><code>RFC2119</code></td><td>Section "rule/behavior" thiếu MUST/SHOULD/MAY</td><td>"AI nên trả lời ngắn"</td></tr>
+        <tr><td><code>AC</code></td><td>AC bullet thiếu số + đơn vị</td><td>"AI gửi tin nhắn ngắn gọn"</td></tr>
+        <tr><td><code>PLATFORM</code></td><td>Token framework-specific ngoài code fence</td><td>"App dùng Compose cho Android"</td></tr>
+        <tr><td><code>OPENQ</code></td><td>Question thiếu <code>**PM answer**:</code></td><td>Q-NN không có dòng answer</td></tr>
+        <tr><td><code>FM</code></td><td>Frontmatter thiếu status / version</td><td>(missing keys)</td></tr>
+      </tbody>
+    </table>
+
+    <pre><span class="dim"># CLI usage</span>
+re-spec-pm-doc-lint <span class="accent">&lt;file_or_dir&gt;</span>           <span class="dim"># warn-only</span>
+re-spec-pm-doc-lint <span class="accent">&lt;path&gt; --strict</span>        <span class="dim"># exit 1 (CI)</span>
+re-spec-pm-doc-lint <span class="accent">&lt;path&gt; --check AC</span>      <span class="dim"># 1 check</span>
+re-spec-pm-doc-lint <span class="accent">&lt;path&gt; --json</span>          <span class="dim"># JSON output</span></pre>
+  </div>
+
+  <!-- Slide 12: Tech stack -->
+  <div class="slide">
+    <div class="section-header">Tech stack</div>
+    <h2>Lean by design</h2>
+
+    <div class="grid-4" style="margin: 2rem 0;">
+      <div class="stat">
+        <div class="stat-num">1</div>
+        <div class="stat-label">required dep<br><code>pyyaml&gt;=6.0</code></div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">19</div>
+        <div class="stat-label">CLI<br>console scripts</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">~5K</div>
+        <div class="stat-label">dòng Python<br>16 modules</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">0</div>
+        <div class="stat-label">dep mới<br>cho Telegram (stdlib)</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Distribution</div>
+        <ul>
+          <li>Python 3.10+, src-layout PEP 518</li>
+          <li><code>bash INSTALL.sh</code> = pip install + symlink ~/.claude/</li>
+          <li>Wheel + sdist trong <code>dist/</code></li>
+          <li>Bundled data via <code>importlib.resources</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Integrations</div>
+        <ul>
+          <li><strong>droidrun Portal v0.6</strong> (a11y capture)</li>
+          <li><strong>adb</strong> (device control)</li>
+          <li><strong>Claude Code</strong> (skill + agent orchestrator)</li>
+          <li><strong>MCP server</strong> stdio (8 tool: spec_show, spec_path, spec_search...)</li>
+          <li><strong>Telegram Bot API</strong> (long-poll, không webhook)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 13: Real numbers -->
+  <div class="slide">
+    <div class="section-header">Đã chạy thật</div>
+    <h2>Baseline bible-agent — 5 feature, 1 app full</h2>
+
+    <div class="grid-4" style="margin: 2rem 0;">
+      <div class="stat">
+        <div class="stat-num">164</div>
+        <div class="stat-label">graph nodes<br>(screen / component / api / ...)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">208</div>
+        <div class="stat-label">graph edges<br>(navigates_to / reuses / ...)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">5</div>
+        <div class="stat-label">feature đã spec<br>today / chat / community / bible / explore</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">63</div>
+        <div class="stat-label">screen captured<br>kèm a11y dump + screenshot</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+      <div class="card-title">📊 Live metrics</div>
+      <p>Tested live trong session phát triển: Telegram bridge end-to-end (post Open Question + reply + fold), stuck-help (4 verdict), app overview (idempotent rerun preserve prose), PM doc lint (bắt RFC 2119 + AC measurable trên doc thật).</p>
+    </div>
+  </div>
+
+  <!-- Slide 14: Use cases -->
+  <div class="slide">
+    <div class="section-header">Tính ứng dụng</div>
+    <h2>4 use case chính</h2>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🎯 Competitor research</div>
+        <p>Spec lại app đối thủ để team product/design nghiên cứu UX pattern. Layer 5 app overview + observations đủ cho PM/designer.</p>
+        <p style="color: var(--green); margin-top: 0.5em;">Output: spec markdown PM đọc được.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🤖 Handoff coding agent</div>
+        <p>RE app để coding agent (Claude/GPT) rebuild. Layer 3 implementation contract + Layer 5 overview + screenshot reference.</p>
+        <p style="color: var(--green); margin-top: 0.5em;">Output: cross-platform spec (iOS + Android).</p>
+      </div>
+      <div class="card">
+        <div class="card-title">📐 UX research baseline</div>
+        <p>Document app hiện có để track UX evolution. Mỗi version capture 1 lần, diff observations để phát hiện UI drift.</p>
+        <p style="color: var(--green); margin-top: 0.5em;">Output: regression baseline.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Spec-first cho team mình</div>
+        <p>Mode: PM viết scope → AI capture flow + sinh implementation contract → engineer rebuild. Workflow đảo ngược cho app team đang build.</p>
+        <p style="color: var(--green); margin-top: 0.5em;">Output: spec authoritative trước code.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 15: Design agent integration -->
+  <div class="slide">
+    <div class="section-header">Tích hợp design agent</div>
+    <h2>Output re-spec-mobile = input cho AI design tools</h2>
+    <p class="lead">Spec structured + screenshots + reuse map = đủ context để design agent sinh prototype HTML/Figma/PPTX không phải start from scratch.</p>
+
+    <div class="grid-3" style="margin-top: 1rem;">
+      <div class="card">
+        <div class="card-title">🎨 Claude Design <span class="tag" style="font-size: 0.7em;">Anthropic Labs · 2026-04</span></div>
+        <p style="font-size: 0.92em;"><strong>Input</strong>: text prompt + đọc <strong>codebase + Figma</strong> → tự extract design system → apply.</p>
+        <p style="color: var(--green-bright); font-size: 0.92em; margin-top: 0.5em;"><strong>Feed gì:</strong></p>
+        <ul style="font-size: 0.88em;">
+          <li><code>feature_spec.md</code> §3 + §6 — state shape + data model</li>
+          <li><code>app_overview.md</code> §A-E — design system source</li>
+          <li><code>spec/screens/</code> — visual reference</li>
+        </ul>
+        <p style="color: var(--text-dim); font-size: 0.85em; margin-top: 0.5em;">→ HTML/CSS/JS prototype deploy được.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">✨ Google Stitch <span class="tag" style="font-size: 0.7em;">Gemini · 2025-05+</span></div>
+        <p style="font-size: 0.92em;"><strong>Input</strong>: text + <strong>image upload</strong> + voice. 4 mode (Ideate / Flash / Thinking / Redesign). Export Figma + HTML/CSS.</p>
+        <p style="color: var(--green-bright); font-size: 0.92em; margin-top: 0.5em;"><strong>Feed gì:</strong></p>
+        <ul style="font-size: 0.88em;">
+          <li><code>observations.md</code> prose — UI behavior abstract</li>
+          <li><code>spec/screens/*.png</code> — image upload primary</li>
+          <li><code>app_overview.md</code> §B Navigation model — UX context</li>
+        </ul>
+        <p style="color: var(--text-dim); font-size: 0.85em; margin-top: 0.5em;">→ Redesign mode: rebuild UI variant từ screenshot.</p>
+      </div>
+
+      <div class="card" style="border-color: var(--green-dim);">
+        <div class="card-title" style="color: var(--green-bright);">📦 Open Design <span class="tag" style="font-size: 0.7em;">nexu-io · OSS</span></div>
+        <p style="font-size: 0.92em;">Open-source alt cho Claude Design. <strong>16 coding agent</strong> + <strong>31 skill</strong> + <strong>129 design system</strong> (<code>DESIGN.md</code> format). Local-first, Apache-2.0.</p>
+        <p style="color: var(--green-bright); font-size: 0.92em; margin-top: 0.5em;"><strong>Feed gì:</strong></p>
+        <ul style="font-size: 0.88em;">
+          <li><code>app_overview.md</code> map sang <code>DESIGN.md</code> — reuse_map = component design system</li>
+          <li><code>scope.md</code> = project brief discovery form</li>
+          <li><code>feature_spec.md</code> = skill input (mobile_app skill)</li>
+        </ul>
+        <p style="color: var(--text-dim); font-size: 0.85em; margin-top: 0.5em;">→ HTML/PPTX/PDF/mobile mockup, no cloud lock-in.</p>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="margin-top: 1.2rem;">
+      <h3 style="color: var(--green-bright); margin-bottom: 0.5em;">🔑 Tại sao re-spec-mobile output fit?</h3>
+      <div class="grid-2" style="margin-top: 0.5em; gap: 1rem;">
+        <ul style="font-size: 0.92em;">
+          <li><strong>Layer 5 platform-agnostic</strong> — match philosophy DESIGN.md (Stitch/Open-design)</li>
+          <li><strong>Reuse map auto-detect</strong> — sẵn list ứng viên design system component</li>
+        </ul>
+        <ul style="font-size: 0.92em;">
+          <li><strong>Layer 3 implementation contract</strong> — coding agent (Claude Design downstream) rebuild có shape rõ</li>
+          <li><strong>Anchor cross-link</strong> — design agent query precise qua MCP, không grep mò</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 16: Limitations -->
+  <div class="slide">
+    <div class="section-header">Honesty</div>
+    <h2>Workflow chuẩn cho 1 lớp app — phần khác có path nhưng chưa develop</h2>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">✅ Xử được tốt (v1.x hiện tại)</div>
+        <ul>
+          <li>Android native (Compose, View XML, mixed)</li>
+          <li>A11y tree đọc được</li>
+          <li>Navigation chuẩn (bottom nav / drawer / tabs)</li>
+          <li>App lành tính với automation</li>
+          <li>PM sẵn sàng tham gia 3 gate</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color: rgba(52, 211, 153, 0.4);">
+        <div class="card-title" style="color: var(--green-bright);">🚧 Có path, chưa tích hợp</div>
+        <ul>
+          <li><strong>iOS</strong> — kỹ thuật khả thi qua <code>xcrun simctl</code> + Accessibility Inspector + idb. Chưa develop module (~600 dòng + iOS profile schema). Roadmap candidate.</li>
+          <li><strong>Flutter / RN / WebView</strong> — a11y tree thưa nhưng có thể nâng parser hiểu WebView role + Hermes a11y (~200 dòng).</li>
+          <li><strong>UX research mode</strong> — skip Layer 3 cho competitor research, profile style mới (~150 dòng).</li>
+        </ul>
+        <p style="color: var(--green-bright); margin-top: 0.5em; font-size: 0.9em;">→ Xem slide Roadmap (slide 17)</p>
+      </div>
+      <div class="card" style="border-color: rgba(245, 158, 11, 0.3);">
+        <div class="card-title" style="color: var(--warning);">⚠️ Hạn chế cần human / test build</div>
+        <ul>
+          <li><strong>Game Unity/Unreal</strong> — a11y tree rỗng (UI render qua Canvas). Chỉ screenshot được.</li>
+          <li><strong>Banking production</strong> — Frida detect, FLAG_SECURE → cần dev build app-side.</li>
+          <li><strong>Captcha / 2FA / OTP</strong> — Phase 3 stuck handoff (PM/user thao tác device).</li>
+          <li><strong>Paywall thật</strong> — cần test account trước khi capture.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="danger-box" style="margin-top: 1.5rem;">
+      <h3 style="color: var(--warning);">⏱️ Effort estimate</h3>
+      <p>Mỗi app cần <strong>2 ngày tuning profile</strong> (blocklist custom, modals.back_traps). Lần đầu 1 feature ~ 4-8h; lần thứ 2 cùng app ~ 2-4h. Không expect auto 100% — Phase 3 reset handoff là norm.</p>
+    </div>
+  </div>
+
+  <!-- Slide 17: Future -->
+  <div class="slide">
+    <div class="section-header">Roadmap</div>
+    <h2>6 hướng cải tiến đang cân nhắc</h2>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">1. Conversation flow template</div>
+        <p>Feature có chat/dialog (như SubTrack AI Chat) không fit 9-section per-screen. Anchor type mới <code>conversation/turn</code>.</p>
+        <span class="tag warn">~400 dòng</span>
+      </div>
+      <div class="card">
+        <div class="card-title">2. Behavioral rules section</div>
+        <p>Anchor type <code>rule/policy</code> cho RFC 2119 MUST/SHOULD trong feature_spec.</p>
+        <span class="tag warn">~150 dòng</span>
+      </div>
+      <div class="card">
+        <div class="card-title">3. Metrics tracking → table</div>
+        <p>Mở rộng §2.3 prose-only → table với anchor <code>metric/&lt;event&gt;</code> + KPI link.</p>
+        <span class="tag warn">~80 dòng</span>
+      </div>
+      <div class="card">
+        <div class="card-title">4. iOS path (big lift)</div>
+        <p>Capture qua <code>xcrun simctl</code> + Accessibility Inspector + idb. Module mới + iOS profile schema.</p>
+        <span class="tag warn">~600 dòng</span>
+      </div>
+      <div class="card">
+        <div class="card-title">5. Hybrid app a11y parser</div>
+        <p>Flutter / RN / WebView a11y tree thưa — nâng parser hiểu WebView role.</p>
+        <span class="tag warn">~200 dòng</span>
+      </div>
+      <div class="card">
+        <div class="card-title">6. <code>ux_research</code> profile style</div>
+        <p>Skip Layer 3 cho competitor research mode (không handoff coding agent).</p>
+        <span class="tag warn">~150 dòng</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 18: Recap -->
+  <div class="slide title-slide">
+    <div class="section-header" style="margin-bottom: 1em;">TL;DR</div>
+    <h1 style="font-size: clamp(2rem, 4vw, 3.5rem);">Spec-first, PM-driven,<br>Cross-platform.</h1>
+    <p class="tagline" style="max-width: 900px;">
+      Capture device → 5 layer markdown → handoff iOS/Android coding agent.<br>
+      11 phase / 3 PM gate / Telegram async review / Layer 5 platform-agnostic.
+    </p>
+
+    <div class="grid-3" style="max-width: 900px; margin: 2rem auto;">
+      <div class="stat">
+        <div class="stat-num">19</div>
+        <div class="stat-label">CLI</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">5</div>
+        <div class="stat-label">layer / feature</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">1</div>
+        <div class="stat-label">required dep</div>
+      </div>
+    </div>
+
+    <p style="color: var(--green-bright); font-size: 1.2em; margin-top: 1em;">github.com/datnt1-tech/re-spec-mobile</p>
+    <p class="meta" style="margin-top: 2em;">Thank you · Q&A</p>
+  </div>
+
+</div>
+
+<div class="nav">
+  <button onclick="prev()">←</button>
+  <span class="counter"><span id="cur">1</span> / <span id="total">15</span></span>
+  <button onclick="next()">→</button>
+</div>
+
+<div class="hint">
+  <kbd>←</kbd> <kbd>→</kbd> hoặc <kbd>Space</kbd> để di chuyển · <kbd>F</kbd> fullscreen
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let cur = 0;
+
+  document.getElementById('total').textContent = total;
+
+  function show(i) {
+    slides.forEach(s => s.classList.remove('active'));
+    cur = Math.max(0, Math.min(total - 1, i));
+    slides[cur].classList.add('active');
+    document.getElementById('cur').textContent = cur + 1;
+  }
+
+  function next() { show(cur + 1); }
+  function prev() { show(cur - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(total - 1); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    }
+  });
+
+  // Click left/right edge to navigate
+  document.addEventListener('click', e => {
+    if (e.target.closest('.nav') || e.target.closest('button')) return;
+    const x = e.clientX / window.innerWidth;
+    if (x < 0.3) prev();
+    else if (x > 0.7) next();
+  });
+</script>
+
+</body>
+</html>
