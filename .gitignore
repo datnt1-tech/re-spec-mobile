@@ -20,3 +20,6 @@ venv/
 # Telegram PM bridge runtime state (per-feature inbox + stuck event log)
 .pm_inbox.json
 .stuck_log.json
+
+# Smoke-test workspaces (output spec không thuộc toolkit repo)
+_test_*/
