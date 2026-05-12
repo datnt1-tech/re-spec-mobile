@@ -78,6 +78,92 @@ def _portal_state(serial: str | None = None) -> dict[str, Any]:
     }
 
 
+def _uiautomator_state(serial: str | None = None) -> dict[str, Any]:
+    """Fallback when Portal returns empty a11y_tree (observed with Portal v0.6.5
+    on some devices). Uses built-in `uiautomator dump` + `dumpsys activity`."""
+    import xml.etree.ElementTree as ET
+
+    _adb(["shell", "uiautomator dump /sdcard/_rsm_dump.xml >/dev/null"], serial=serial)
+    raw = _adb(["shell", "cat /sdcard/_rsm_dump.xml"], serial=serial).decode("utf-8", errors="replace")
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError as e:
+        raise RuntimeError(f"uiautomator dump XML parse failed: {e}; raw[:200]={raw[:200]!r}")
+
+    dump_activity = root.attrib.get("activity", "")
+    dump_pkg = ""
+    try:
+        focus_raw = _adb(["shell", "dumpsys activity activities | grep topResumedActivity"], serial=serial).decode("utf-8", errors="replace")
+        m = re.search(r"u0 ([^/]+)/(\S+) t\d+", focus_raw)
+        if m:
+            dump_pkg = m.group(1)
+            dump_activity = m.group(2)
+    except Exception:
+        pass
+
+    bounds_re = re.compile(r"\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]")
+
+    def walk_xml(node):
+        children = []
+        for child in node.findall("node"):
+            children.append(walk_xml(child))
+        cls = node.attrib.get("class", "") or ""
+        text = node.attrib.get("text", "") or ""
+        desc = node.attrib.get("content-desc", "") or ""
+        rid = node.attrib.get("resource-id", "") or ""
+        clickable = node.attrib.get("clickable", "false") == "true"
+        b = node.attrib.get("bounds", "")
+        m = bounds_re.match(b)
+        if m:
+            x1, y1, x2, y2 = (int(g) for g in m.groups())
+            bounds = {"left": x1, "top": y1, "right": x2, "bottom": y2}
+        else:
+            bounds = b
+        return {
+            "index": node.attrib.get("index"),
+            "class_name": cls,
+            "resource_id": rid,
+            "text": text,
+            "content_description": desc,
+            "clickable": clickable,
+            "bounds": bounds,
+            "children": children,
+        }
+
+    tree: list[dict[str, Any]] = []
+    for top in root.findall("node"):
+        tree.append(walk_xml(top))
+
+    keyboard_visible = False
+    try:
+        ime_raw = _adb(["shell", "dumpsys input_method | grep mInputShown"], serial=serial).decode("utf-8", errors="replace")
+        keyboard_visible = "mInputShown=true" in ime_raw
+    except Exception:
+        pass
+
+    return {
+        "phone_state": {
+            "current_app": dump_pkg,
+            "current_package": dump_pkg,
+            "current_activity": dump_activity,
+            "keyboard_visible": keyboard_visible,
+            "is_editable": False,
+            "focused_element": {},
+        },
+        "a11y_tree": tree,
+    }
+
+
+def _state_with_fallback(serial: str | None = None) -> tuple[dict[str, Any], str]:
+    """Try Portal first; if a11y_tree empty, fall back to uiautomator dump.
+    Returns (state, source) where source is 'portal' or 'uiautomator'."""
+    portal_state = _portal_state(serial=serial)
+    if portal_state.get("a11y_tree"):
+        return portal_state, "portal"
+    ua_state = _uiautomator_state(serial=serial)
+    return ua_state, "uiautomator"
+
+
 def _normalize_phone(p: dict[str, Any]) -> dict[str, Any]:
     return {
         "current_app": p.get("currentApp", ""),
@@ -210,10 +296,12 @@ def main() -> int:
     time.sleep(settle_ms / 1000.0)
 
     try:
-        state = _portal_state(serial=serial)
+        state, source = _state_with_fallback(serial=serial)
     except Exception as exc:
-        print(f"ERROR: Portal state read failed: {exc}", file=sys.stderr)
+        print(f"ERROR: state read failed: {exc}", file=sys.stderr)
         return 1
+    if source == "uiautomator":
+        print("WARN: Portal a11y_tree empty — fell back to uiautomator dump", file=sys.stderr)
 
     try:
         png_bytes = _adb(["exec-out", "screencap", "-p"], serial=serial)
